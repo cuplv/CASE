@@ -1,0 +1,48 @@
+module pylang/syntax
+
+type Val {
+  I(i: Int)
+  B(b: Bool)
+  U()
+}
+
+def println(v: Val) = v match {
+  case I(i) => {
+    val s = "Int(" ++ show(i) ++ ")"
+    println(s)
+  }
+  case B(b) => {
+    val s = "Bool(" ++ show(b) ++ ")"
+    println(s)
+  }
+  case U() => println("()")
+}
+
+type Expr {
+  // Cst(v: Val)
+  Num(i: Int)
+  Boolean(b: Bool)
+  Unit()
+  Var(x: String)
+  Plus(e1: Expr, e2: Expr)
+  Minus(e1: Expr, e2: Expr)
+  Not(e: Expr)
+  Eq(e1: Expr, e2: Expr)
+  Lt(e1: Expr, e2: Expr)
+  Gt(e1: Expr, e2: Expr)
+  Le(e1: Expr, e2: Expr)
+  Ge(e1: Expr, e2: Expr)
+}
+
+type Stmt {
+  Skip()
+  Asgn(x: String, v: Expr)
+  If(g: Expr, t: Stmt, f: Stmt)
+  While(g: Expr, b: Stmt)
+  Seq(e1: Stmt, e2: Stmt)
+}
+
+type Prog {
+  E(e : Expr)
+  S(s : Stmt)
+}
