@@ -13,15 +13,10 @@ type State[D] {
   St(st: Map[String, D])
 }
 
-// type StateP[S] {
-  // St(s : S)
-// }
-
 // introduction beta effects
 effect intI[D](st: State[D], i: Int): (D, State[D])
 effect boolI[D](st: State[D], i: Bool): (D, State[D])
 effect unitI[D](st: State[D]): (D, State[D])
-// effect cstI[D](v: Val, st: State[D]): (D, State[D])
 
 // introduction effects
 effect varI[D](st: State[D], e1: String): (D, State[D])
@@ -34,7 +29,6 @@ effect ltI[D](st: State[D], e1: D, e2: D): (D, State[D])
 effect gtI[D](st: State[D], e1: D, e2: D): (D, State[D])
 effect leI[D](st: State[D], e1: D, e2: D): (D, State[D])
 effect geI[D](st: State[D], e1: D, e2: D): (D, State[D])
-// effect ifI[D](st: State[D], g: D, t: D, f: D): (D, State[D])
 effect ifI[D](stT: State[D], stF: State[D], g: D, t: D, f: D): (D, State[D])
 effect whileI[D](stT: State[D], stF: State[D], g: D, b: D): (D, State[D])
 effect seqI[D](st1: State[D], st2: State[D], e1: D, e2: D): (D, State[D])
