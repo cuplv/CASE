@@ -13,7 +13,6 @@ help:
   @echo 'build-json       := build json ast of python test files'
   @echo 'run-concrete     := run concrete evaluation on given json file'
   @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
-  @echo 'run-concrete-all := run python evaluation on all python test file and save'
   @echo 'build-concrete   := build concrete evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
 
