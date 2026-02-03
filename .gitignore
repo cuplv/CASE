@@ -6,6 +6,9 @@
 /out/
 out/
 
+# interp output
+*_output.txt
+
 # node for slidev presentation
 # Logs
 logs
