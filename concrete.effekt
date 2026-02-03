@@ -4,6 +4,7 @@ import pylang/interp
 import pylang/pyconv
 import pylang/syntax
 
+import args
 import io/error
 import io/filesystem
 import json
@@ -296,12 +297,33 @@ namespace test {
     // m.foreach { (k,v) => println(k); println(v)}
     // println("----------------")
 
-    val whileProg = S(Seq(Asgn("x", Num(0)), While(Lt(Var("x"), Num(1000000)), Asgn("x", Plus(Var("x"), Num(1))))))
-    val (_, s) = run(whileProg, St(init))
-    val m = s match {case St(a) => a}
-    println("-- performance testing --")
-    m.foreach { (k,v) => println(k); println(v)}
-    println("---------")
+    // complex if with unhit while
+    val file: List[String] = args::commandLineArgs()
+    file match {
+      case Cons(_, _) => {
+        file.foreach{ (f) =>
+          println(f)
+          val jsonFile: String = filesystem::readFile(f)
+          feed(jsonFile) {
+            with scanner[Char]
+            val (_, jsonVal) = build { decodeJson() }
+            val parsed = pythonAstToProg(jsonVal)
+            val (_, s) = run(parsed, St(init))
+            val m = s match {case St(a) => a}
+            println("---------")
+            m.foreach { (k,v) => println(k); println(v)}
+            println("---------")
+          }
+        }
+      }
+      case Nil() => println("no file passed in")
+    }
+    // val whileProg = S(Seq(Asgn("x", Num(0)), While(Lt(Var("x"), Num(1000000)), Asgn("x", Plus(Var("x"), Num(1))))))
+    // val (_, s) = run(whileProg, St(init))
+    // val m = s match {case St(a) => a}
+    // println("-- performance testing --")
+    // m.foreach { (k,v) => println(k); println(v)}
+    // println("---------")
 
     // complex if with unhit while
     // val ifJson: String = filesystem::readFile("pylang/tests/testNestedIfWhile.json")

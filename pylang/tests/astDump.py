@@ -1,6 +1,7 @@
 import ast
 import json
 from typing import Any, Dict, List, Union
+import argparse
 
 
 def ast_to_dict(node: ast.AST) -> Dict[str, Any]:
@@ -72,13 +73,15 @@ def dump_ast_json_file(input_file: str, output_file: str = None, indent: int = 2
 
 
 if __name__ == "__main__":
-    test_files = ["testArith.py", "testIntervalWhile.py","testIntervalArith.py", "testAssgn.py", "testIf.py", "testNestedIfWhile.py", "testWhile.py", "testNot.py"]
+    parser = argparse.ArgumentParser(description ="parse python file's AST to json")
+    parser.add_argument('-f', '--files', nargs='+', help="files")
+    files = parser.parse_args().files
     
-    for test_file in test_files:
+    for file in files:
         try:
-            print(f"Processing {test_file}...")
-            dump_ast_json_file(test_file)
+            print(f"Processing {file}...")
+            dump_ast_json_file(file)
         except FileNotFoundError:
-            print(f"File not found: {test_file}")
+            print(f"File not found: {file}")
         except SyntaxError as e:
-            print(f"Syntax error in {test_file}: {e}")
+            print(f"Syntax error in {file}: {e}")

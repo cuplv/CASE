@@ -21,12 +21,18 @@
     + int
     + bool
     + string
-    + list
-    + tuple
-    + dictionary
+    + more complicated
+        + list
+        + tuple
+        + dictionary
 
 - functions (built in or not)
     + addition
     + concatenation
     + subtraction
     + multiplication
+    + compound types
+        + pop
+        + append
+        + push
+        + remove
