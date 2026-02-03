@@ -1,3 +1,6 @@
+# os dependent extension
+os_ext := if os() == "windows" {".bat"} else {""}
+
 # effekt exe path
 effekt := "./node_modules/@effekt-lang/effekt/bin/effekt"
 
@@ -5,10 +8,7 @@ effekt := "./node_modules/@effekt-lang/effekt/bin/effekt"
 installed := path_exists("./node_modules/@effekt-lang/effekt/bin/effekt")
 
 # is concrete eval built
-conc_built := path_exists("./out/concrete")
-
-# os dependent extension
-os_ext := if os() == "windows" {".bat"} else {""}
+conc_built := path_exists("./out/concrete"+os_ext)
 
 # file to run
 file := ""
