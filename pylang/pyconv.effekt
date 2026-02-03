@@ -21,7 +21,7 @@ def jsonValueToExpr(jsonVal: JsonValue): Expr = jsonVal match {
       case _ => "Unknown"
     }
     exprFromJson(exprType, els)
-  case _ => Unit()
+  case _ => U()
 }
 
 def exprFromJson(exprType: String, fields: List[(String, JsonValue)]): Expr = {
@@ -33,16 +33,16 @@ def exprFromJson(exprType: String, fields: List[(String, JsonValue)]): Expr = {
   
   def jsonToExpr(v: JsonValue): Expr = v match {
     case Number(n) => Num(n.toInt)
-    case Null() => Unit()
+    case Null() => U()
     case String(s) => Var(s)
-    case List(_) => Unit()
+    case List(_) => U()
     case Dict(els) => 
       val exprType = els.filter { case (k, _) => k == "type" }.headOption() match {
         case Some((_, String(t))) => t
         case _ => "Unknown"
       }
       exprFromJson(exprType, els)
-    case _ => Unit()
+    case _ => U()
   }
   
   exprType match {
@@ -57,7 +57,7 @@ def exprFromJson(exprType: String, fields: List[(String, JsonValue)]): Expr = {
         case _ => false 
       }
       Boolean(exprBool)
-    case "Unit" => Unit()
+    case "Unit" => U()
     case "Var" => 
       val x = getField("x")
       Var(x match { case String(s) => s case _ => "" })
@@ -90,7 +90,7 @@ def exprFromJson(exprType: String, fields: List[(String, JsonValue)]): Expr = {
       While(jsonToExpr(getField("g")), jsonToExpr(getField("b")))
     case "Seq" =>
       Seq(jsonToExpr(getField("e1")), jsonToExpr(getField("e2")))
-    case _ => Unit()
+    case _ => U()
   }
 }
 
@@ -103,10 +103,10 @@ def pythonAstToExpr(json: JsonValue): Expr = json match {
       }
     
     def statementsToExpr(stmts: List[JsonValue]): Expr = {
-      val init: Expr = Unit()
+      val init: Expr = U()
       stmts.foldRight(init) { (stmt, acc) =>
         acc match {
-          case Unit() => pythonAstToExpr(stmt)
+          case U() => pythonAstToExpr(stmt)
           case e => Seq(pythonAstToExpr(stmt), e)
         }
       }
@@ -122,7 +122,7 @@ def pythonAstToExpr(json: JsonValue): Expr = json match {
         getField("body") match {
           case List(exprs) => 
             statementsToExpr(exprs)
-          case _ => Unit()
+          case _ => U()
         }
       
       case "Expr" =>
@@ -131,7 +131,7 @@ def pythonAstToExpr(json: JsonValue): Expr = json match {
       case "Constant" =>
         getField("value") match {
           case Number(n) => Num(n.toInt)
-          case _ => Unit()
+          case _ => U()
         }
       
       case "BinOp" =>
@@ -149,7 +149,7 @@ def pythonAstToExpr(json: JsonValue): Expr = json match {
         op match {
           case "Add" => Plus(left, right)
           case "Sub" => Minus(left, right)
-          case _ => Unit()
+          case _ => U()
         }
       
       case "Compare" =>
@@ -171,17 +171,17 @@ def pythonAstToExpr(json: JsonValue): Expr = json match {
                               case Some((_, String("Eq"))) => Eq(left, right)
                               case Some((_, String("LtE"))) => Le(left, right)
                               case Some((_, String("GtE"))) => Ge(left, right)
-                              case _ => Unit()
+                              case _ => U()
                             }
-                          case _ => Unit()
+                          case _ => U()
                         }
-                      case None() => Unit()
+                      case None() => U()
                     }
-                  case _ => Unit()
+                  case _ => U()
                 }
-              case None() => Unit()
+              case None() => U()
             }
-          case _ => Unit()
+          case _ => U()
         }
       
       case "If" =>
@@ -189,12 +189,12 @@ def pythonAstToExpr(json: JsonValue): Expr = json match {
         val thenBody = getField("body") match {
           case List(stmts) =>
             statementsToExpr(stmts)
-          case _ => Unit()
+          case _ => U()
         }
         val elseBody = getField("orelse") match {
           case List(stmts) =>
             statementsToExpr(stmts)
-          case _ => Unit()
+          case _ => U()
         }
         If(cond, thenBody, elseBody)
       
@@ -221,13 +221,13 @@ def pythonAstToExpr(json: JsonValue): Expr = json match {
       case "Name" =>
         getField("id") match {
           case String(id) => Var(id)
-          case _ => Unit()
+          case _ => U()
         }
       
-      case _ => Unit()
+      case _ => U()
     }
   
-  case _ => Unit()
+  case _ => U()
 }
 
 namespace tests {
@@ -297,7 +297,7 @@ def jsonValueToProg(jsonVal: JsonValue): Prog = jsonVal match {
       case _ => "Unknown"
     }
     progFromJson(exprType, els)
-  case _ => E(Unit())
+  case _ => E(Cst(U()))
 }
 
 def progFromJson(exprType: String, fields: List[(String, JsonValue)]): Prog = {
@@ -319,19 +319,19 @@ def stmtFromJson(stmtType: String, fields: List[(String, JsonValue)]): Stmt = {
     }
   
   def jsonToExpr(v: JsonValue): Expr = v match {
-    case Number(n) => Num(n.toInt)
+    case Number(n) => Cst(I(n.toInt))
     // added
-    case Bool(b) => Boolean(b)
-    case Null() => Unit()
+    case Bool(b) => Cst(B(b))
+    case Null() => Cst(U())
     case String(s) => Var(s)
-    case List(_) => Unit()
+    case List(_) => Cst(U())
     case Dict(els) => 
       val exprType = els.filter { case (k, _) => k == "type" }.headOption() match {
         case Some((_, String(t))) => t
         case _ => "Unknown"
       }
       exprFromJson(exprType, els)
-    // case _ => Unit()
+    // case _ => U()
   }
   
   def jsonToStmt(v: JsonValue): Stmt = v match {
@@ -371,23 +371,23 @@ def exprFromJson(exprType: String, fields: List[(String, JsonValue)]): Expr = {
     }
   
   def jsonToExpr(v: JsonValue): Expr = v match {
-    case Number(n) => Num(n.toInt)
-    case Null() => Unit()
+    case Number(n) => Cst(I(n.toInt))
+    case Null() => Cst(U())
     case String(s) => Var(s)
-    case List(_) => Unit()
+    case List(_) => Cst(U())
     case Dict(els) => 
       val exprType = els.filter { case (k, _) => k == "type" }.headOption() match {
         case Some((_, String(t))) => t
         case _ => "Unknown"
       }
       exprFromJson(exprType, els)
-    case _ => Unit()
+    case _ => Cst(U())
   }
   
   exprType match {
     case "Num" => 
       val n = getField("i")
-      Num(n match { case Number(x) => x.toInt case _ => 0 })
+      Cst(I(n match { case Number(x) => x.toInt case _ => 0 }))
     case "Bool" => 
       val b = getField("b")
       val exprBool = b match { 
@@ -395,8 +395,8 @@ def exprFromJson(exprType: String, fields: List[(String, JsonValue)]): Expr = {
         case Number(1.0) => true
         case _ => false 
       }
-      Boolean(exprBool)
-    case "Unit" => Unit()
+      Cst(B(exprBool))
+    case "Unit" => Cst(U())
     case "Var" => 
       val x = getField("x")
       Var(x match { case String(s) => s case _ => "" })
@@ -416,7 +416,7 @@ def exprFromJson(exprType: String, fields: List[(String, JsonValue)]): Expr = {
       Le(jsonToExpr(getField("e1")), jsonToExpr(getField("e2")))
     case "Ge" =>
       Ge(jsonToExpr(getField("e1")), jsonToExpr(getField("e2")))
-    case _ => Unit()
+    case _ => Cst(U())
   }
 }
 
@@ -434,7 +434,7 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
         case Cons(stmt, rest) =>
           val current = pythonAstToProg(stmt)
           val newAcc = (acc, current) match {
-            case (E(Unit()), p) => p
+            case (E(Cst(U())), p) => p
             case (E(e), E(eNext)) => S(Seq(Asgn("_", e), Asgn("_", eNext)))
             case (E(e), S(sNext)) => S(Seq(Asgn("_", e), sNext))
             case (S(Skip()), p) => p
@@ -456,7 +456,7 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
         getField("body") match {
           case List(exprs) => 
             statementsToResult(exprs)
-          case _ => E(Unit())
+          case _ => E(Cst(U()))
         }
       
       case "Expr" =>
@@ -464,9 +464,9 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
       
       case "Constant" =>
         getField("value") match {
-          case Number(n) => E(Num(n.toInt))
-          case Bool(b)   => E(Boolean(b))   // <-- FIX
-          case _ => E(Unit())
+          case Number(n) => E(Cst(I(n.toInt)))
+          case Bool(b)   => E(Cst(B(b)))   // <-- FIX
+          case _ => E(Cst(U()))
         }
       
       case "BinOp" =>
@@ -486,9 +486,9 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
             op match {
               case "Add" => E(Plus(leftExpr, rightExpr))
               case "Sub" => E(Minus(leftExpr, rightExpr))
-              case _ => E(Unit())
+              case _ => E(Cst(U()))
             }
-          case _ => E(Unit())
+          case _ => E(Cst(U()))
         }
       
       case "Compare" =>
@@ -512,19 +512,19 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
                                   case Some((_, String("Eq"))) => E(Eq(leftExpr, rightExpr))
                                   case Some((_, String("LtE"))) => E(Le(leftExpr, rightExpr))
                                   case Some((_, String("GtE"))) => E(Ge(leftExpr, rightExpr))
-                                  case _ => E(Unit())
+                                  case _ => E(Cst(U()))
                                 }
-                              case _ => E(Unit())
+                              case _ => E(Cst(U()))
                             }
-                          case None() => E(Unit())
+                          case None() => E(Cst(U()))
                         }
-                      case _ => E(Unit())
+                      case _ => E(Cst(U()))
                     }
-                  case _ => E(Unit())
+                  case _ => E(Cst(U()))
                 }
-              case None() => E(Unit())
+              case None() => E(Cst(U()))
             }
-          case _ => E(Unit())
+          case _ => E(Cst(U()))
         }
       
       case "If" =>
@@ -555,7 +555,7 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
             S(If(condExpr, thenStmt, Asgn("_", elseExpr)))
           case (E(condExpr), S(thenStmt), S(elseStmt)) =>
             S(If(condExpr, thenStmt, elseStmt))
-          case _ => E(Unit())
+          case _ => E(Cst(U()))
         }
       
       case "While" =>
@@ -570,7 +570,7 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
             S(While(condExpr, Asgn("_", bodyExpr)))
           case (E(condExpr), S(bodyStmt)) =>
             S(While(condExpr, bodyStmt))
-          case _ => E(Unit())
+          case _ => E(Cst(U()))
         }
       
       case "Assign" =>
@@ -593,19 +593,19 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
         val value = pythonAstToProg(getField("value"))
         value match {
           case E(valueExpr) => S(Asgn(targets, valueExpr))
-          case _ => E(Unit())
+          case _ => E(Cst(U()))
         }
       
       case "Name" =>
         getField("id") match {
           case String(id) => E(Var(id))
-          case _ => E(Unit())
+          case _ => E(Cst(U()))
         }
       
-      case _ => E(Unit())
+      case _ => E(Cst(U()))
     }
   
-  case _ => E(Unit())
+  case _ => E(Cst(U()))
 }
 
 namespace tests {
