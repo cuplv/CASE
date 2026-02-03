@@ -7,6 +7,9 @@ installed := path_exists("./node_modules/@effekt-lang/effekt/bin/effekt")
 # is concrete eval built
 conc_built := path_exists("./out/concrete")
 
+# os dependent extension
+os_ext := if os() == "windows" {".bat"} else {""}
+
 # file to run
 file := ""
 
@@ -55,7 +58,7 @@ run-concrete *FILE:
     cat pylang/tests/{{FILE}}.py; \
     echo "---------\n"; \
     echo "> end state:"; \
-    ./out/concrete pylang/tests/{{FILE}}.json; \
+    ./out/concrete{{os_ext}} pylang/tests/{{FILE}}.json; \
   else \
     echo "> concrete evaluation not built, run 'just build-concrete'"; \
   fi
