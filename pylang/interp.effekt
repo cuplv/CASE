@@ -14,9 +14,11 @@ type State[D] {
 }
 
 // introduction beta effects
-effect intI[D](st: State[D], i: Int): (D, State[D])
-effect boolI[D](st: State[D], i: Bool): (D, State[D])
-effect unitI[D](st: State[D]): (D, State[D])
+// effect intI[D](st: State[D], i: Int): (D, State[D])
+// effect boolI[D](st: State[D], i: Bool): (D, State[D])
+// effect unitI[D](st: State[D]): (D, State[D])
+
+effect cstI[D, S](st: S, v: Val): (D, S) 
 
 // introduction effects
 effect varI[D](st: State[D], e1: String): (D, State[D])
@@ -32,12 +34,14 @@ effect geI[D](st: State[D], e1: D, e2: D): (D, State[D])
 effect ifI[D](stT: State[D], stF: State[D], g: D, t: D, f: D): (D, State[D])
 effect whileI[D](stT: State[D], stF: State[D], g: D, b: D): (D, State[D])
 effect seqI[D](st1: State[D], st2: State[D], e1: D, e2: D): (D, State[D])
+effect skipI[D](st: State[D]): (D, State[D])
 // lowering effects
 effect assume[D](st: State[D], guard: D, e: D): (D, State[D])
 effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
   
 // elimination effects
 interface Elimination[D] {
+  def cstE(st: State[D], x:Val) : (D, State[D])
   def varE(st: State[D], x: String): (Prog, State[D])
   def asgnE(st: State[D], x: String, v: Expr): (Prog, State[D])
   def plusE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
@@ -51,23 +55,23 @@ interface Elimination[D] {
   def ifE(st: State[D], g: Expr, t: Stmt, f: Stmt): (Prog, State[D])
   def whileE(st: State[D], g: Expr, b: Stmt): (Prog, State[D])
   def seqE(st: State[D], e1: Stmt, e2: Stmt): (Prog, State[D])
+  def skipE(st: State[D]): (D, State[D])
 }
 
 // unsubstantiated eval
+// if its unsubstantiated why are you substantiating it?
 def eval[D](prog: (Prog, State[D])): (D, State[D]) /
   {
-    intI[D],
-    boolI[D],
-    unitI[D],
     varI[D],
     Elimination[D]
   } = 
   val (e, st) = prog
   e match {
     case E(e) => e match  {
-      case Num(i) => do intI(st,i)
-      case Boolean(b) => do boolI(st,b)
-      case Unit() => do unitI(st)
+      // case Num(i) => do intI(st,i)
+      // case Boolean(b) => do boolI(st,b)
+      // case Unit() => do unitI(st)
+      case Cst(v) => do cstE(st, v)
       case Plus(e1, e2) => eval(do plusE(st, e1, e2))
       case Minus(e1, e2) => eval(do minusE(st, e1, e2))
       case Not(e) => eval(do notE(st, e))
@@ -83,7 +87,7 @@ def eval[D](prog: (Prog, State[D])): (D, State[D]) /
       case If(g, t, f) => eval(do ifE(st, g,t,f))
       case While(g, b) => eval(do whileE(st, g, b))
       case Seq(e1, e2) => eval(do seqE(st, e1, e2))
-      case Skip() => do unitI(st) // skip just returns (Unit, State)
+      case Skip() => do skipE(st) // skip just returns (Unit, State)
     }
   }
 

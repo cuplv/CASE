@@ -14,12 +14,10 @@ import scanner
 effect get(st: State[Val], x: String): Val
 effect update(st: State[Val], x: String, v: Val): State[Val]
 
-def match_to_fold
+def match_to_fold // this is really our eval
   { prog: => (Val, State[Val]) / {Elimination[Val]} } : (Val, State[Val]) /
   {
-    unitI[Val],
-    intI[Val],
-    boolI[Val],
+    cstI[Val, State[Val]],
     varI[Val],
     asgnI[Val],
     plusI[Val],
@@ -32,13 +30,17 @@ def match_to_fold
     geI[Val],
     ifI[Val],
     whileI[Val],
-    seqI[Val]
+    seqI[Val],
+    skipI[Val]
   } =
 {
   try {
     prog()
   }
   with Elimination[Val] {
+    def cstE(st, v) = {
+      do cstI(st, v)
+    }
     def varE(st, x) = {
       do varI(st, x)
     }
@@ -108,7 +110,7 @@ def match_to_fold
       val (wV, wS) = do whileI(st1, st2, guardVal, bodyVal)
       wV match {
         case B(true) => resume((S(While(guardExpr, bodyStmt)), st2))
-        case _ => resume((E(Unit()), st1))
+        case _ => resume((E(Cst(U())), st1))
       }
     }
 
@@ -116,6 +118,9 @@ def match_to_fold
       val (v1, st1) = resume((S(s1), st))
       val (v2, st2) = resume((S(s2), st1))
       do seqI(st1, st2, v1, v2)
+    }
+    def skipE(st) = {
+      do skipI(st)
     }
   }
 }
@@ -127,17 +132,20 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     eval((prog, init))
   }
   // introduction handlers produce concrete syntax::Val-like D values
-  with intI[Val] { (st, i) =>
-    val result = I(i)
-    resume((result, st))
-  }
-  with boolI[Val] { (st, b) =>
-    val result = B(b)
-    resume((result, st))
-  }
-  with unitI[Val] { (st) =>
-    val result = U()
-    resume((result, st))
+  // with intI[Val] { (st, i) =>
+  //   val result = I(i)
+  //   resume((result, st))
+  // }
+  // with boolI[Val] { (st, b) =>
+  //   val result = B(b)
+  //   resume((result, st))
+  // }
+  // with unitI[Val] { (st) =>
+  //   val result = U()
+  //   resume((result, st))
+  // }
+  with cstI[Val, State[Val]] {(st, v) => 
+    resume((v, st))
   }
   with varI[Val] { (st, x) =>
     val m: Map[String, Val] = st match {case St(a) => a}
@@ -229,6 +237,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
   }
   with seqI[Val] {(_, st2, _, v2) => resume((v2, st2))}
+  with skipI[Val] {(st) => resume((U(), st))}
 }
 
 namespace test {
@@ -238,66 +247,66 @@ namespace test {
     val init: Map[String, Val] = map::empty(box compareStringBytes)
 
     // basic arith
-    // val arithJson: String = filesystem::readFile("pylang/tests/testArith.json")
-    // feed(arithJson) {
-      // with scanner[Char]
-      // val (_, jsonVal) = build { decodeJson() }
-      // val arithExpr = pythonAstToProg(jsonVal)
-      // val (_, s) = run(arithExpr, St(init))
-      // val m = s match {case St(a) => a}
-      // println("--arith ex--")
-      // m.foreach { (k,v) => println(k); println(v)}
-      // println("------------")
-    // }
+    val arithJson: String = filesystem::readFile("pylang/tests/testArith.json")
+    feed(arithJson) {
+      with scanner[Char]
+      val (_, jsonVal) = build { decodeJson() }
+      val arithExpr = pythonAstToProg(jsonVal)
+      val (_, s) = run(arithExpr, St(init))
+      val m = s match {case St(a) => a}
+      println("--arith ex--")
+      m.foreach { (k,v) => println(k); println(v)}
+      println("------------")
+    }
 
     // basic if
-    // val ifJson: String = filesystem::readFile("pylang/tests/testIf.json")
-    // feed(ifJson) {
-      // with scanner[Char]
-      // val (_, jsonVal) = build { decodeJson() }
-      // val ifExpr = pythonAstToProg(jsonVal)
-      // val (_, s) = run(ifExpr, St(init))
-      // val m = s match {case St(a) => a}
-      // println("--if ex--")
-      // m.foreach { (k,v) => println(k); println(v)}
-      // println("---------")
-    // }
+    val ifJson: String = filesystem::readFile("pylang/tests/testIf.json")
+    feed(ifJson) {
+      with scanner[Char]
+      val (_, jsonVal) = build { decodeJson() }
+      val ifExpr = pythonAstToProg(jsonVal)
+      val (_, s) = run(ifExpr, St(init))
+      val m = s match {case St(a) => a}
+      println("--if ex--")
+      m.foreach { (k,v) => println(k); println(v)}
+      println("---------")
+    }
 
     // basic assign
-    // val asgnJson: String = filesystem::readFile("pylang/tests/testAssgn.json")
-    // feed(asgnJson) {
-      // with scanner[Char]
-      // val (_, jsonVal) = build { decodeJson() }
-      // val asgnExpr = pythonAstToProg(jsonVal)
-      // val (_, s) = run(asgnExpr, St(init))
-      // val m = s match {case St(a) => a}
-      // println("--basic assign--")
-      // m.foreach { (k,v) => println(k); println(v)}
-      // println("----------------")
-    // }
+    val asgnJson: String = filesystem::readFile("pylang/tests/testAssgn.json")
+    feed(asgnJson) {
+      with scanner[Char]
+      val (_, jsonVal) = build { decodeJson() }
+      val asgnExpr = pythonAstToProg(jsonVal)
+      val (_, s) = run(asgnExpr, St(init))
+      val m = s match {case St(a) => a}
+      println("--basic assign--")
+      m.foreach { (k,v) => println(k); println(v)}
+      println("----------------")
+    }
 
     // basic assign
-    // val whileJson: String = filesystem::readFile("pylang/tests/testWhile.json")
-    // feed(whileJson) {
-      // with scanner[Char]
-      // val (_, jsonVal) = build { decodeJson() }
-      // val whileProg = pythonAstToProg(jsonVal)
-      // val (_, s) = run(whileProg, St(init))
-      // val m = s match {case St(a) => a}
-      // println("--basic while--")
-      // m.foreach { (k,v) => println(k); println(v)}
-      // println("----------------")
-    // }
+    val whileJson: String = filesystem::readFile("pylang/tests/testWhile.json")
+    feed(whileJson) {
+      with scanner[Char]
+      val (_, jsonVal) = build { decodeJson() }
+      val whileProg = pythonAstToProg(jsonVal)
+      val (_, s) = run(whileProg, St(init))
+      val m = s match {case St(a) => a}
+      println("--basic while--")
+      m.foreach { (k,v) => println(k); println(v)}
+      println("----------------")
+    }
 
     // basic not
-    // val notProg = S(Seq(Asgn("x", Boolean(false)), Asgn("y", Not(Var("x")))))
-    // val (_, s) = run(notProg, St(init))
-    // val m = s match {case St(a) => a}
-    // println("--basic not--")
-    // m.foreach { (k,v) => println(k); println(v)}
-    // println("----------------")
+    val notProg = S(Seq(Asgn("x", Cst(B(false))), Asgn("y", Not(Var("x")))))
+    val (_, s) = run(notProg, St(init))
+    val m = s match {case St(a) => a}
+    println("--basic not--")
+    m.foreach { (k,v) => println(k); println(v)}
+    println("----------------")
 
-    // complex if with unhit while
+    // complex if with unit while
     val file: List[String] = args::commandLineArgs()
     file match {
       case Cons(_, _) => {
@@ -318,24 +327,24 @@ namespace test {
       }
       case Nil() => println("no file passed in")
     }
-    // val whileProg = S(Seq(Asgn("x", Num(0)), While(Lt(Var("x"), Num(1000000)), Asgn("x", Plus(Var("x"), Num(1))))))
-    // val (_, s) = run(whileProg, St(init))
-    // val m = s match {case St(a) => a}
-    // println("-- performance testing --")
-    // m.foreach { (k,v) => println(k); println(v)}
-    // println("---------")
+    val whileProg = S(Seq(Asgn("x", Cst(I(0))), While(Lt(Var("x"), Cst(I(1000000))), Asgn("x", Plus(Var("x"), Cst(I(1)))))))
+    val (_, s) = run(whileProg, St(init))
+    val m = s match {case St(a) => a}
+    println("-- performance testing --")
+    m.foreach { (k,v) => println(k); println(v)}
+    println("---------")
 
     // complex if with unhit while
-    // val ifJson: String = filesystem::readFile("pylang/tests/testNestedIfWhile.json")
-    // feed(ifJson) {
-      // with scanner[Char]
-      // val (_, jsonVal) = build { decodeJson() }
-      // val ifExpr = pythonAstToProg(jsonVal)
-      // val (_, s) = run(ifExpr, St(init))
-      // val m = s match {case St(a) => a}
-      // println("--nested if ex--")
-      // m.foreach { (k,v) => println(k); println(v)}
-      // println("---------")
-    // }
+    val ifJson: String = filesystem::readFile("pylang/tests/testNestedIfWhile.json")
+    feed(ifJson) {
+      with scanner[Char]
+      val (_, jsonVal) = build { decodeJson() }
+      val ifExpr = pythonAstToProg(jsonVal)
+      val (_, s) = run(ifExpr, St(init))
+      val m = s match {case St(a) => a}
+      println("--nested if ex--")
+      m.foreach { (k,v) => println(k); println(v)}
+      println("---------")
+    }
   }
 }

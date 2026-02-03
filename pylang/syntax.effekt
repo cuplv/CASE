@@ -19,10 +19,7 @@ def println(v: Val) = v match {
 }
 
 type Expr {
-  // Cst(v: Val)
-  Num(i: Int)
-  Boolean(b: Bool)
-  Unit()
+  Cst(v: Val)
   Var(x: String)
   Plus(e1: Expr, e2: Expr)
   Minus(e1: Expr, e2: Expr)
