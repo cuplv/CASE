@@ -302,7 +302,7 @@ namespace test {
     file match {
       case Cons(_, _) => {
         file.foreach{ (f) =>
-          println(f)
+          // println(f)
           val jsonFile: String = filesystem::readFile(f)
           feed(jsonFile) {
             with scanner[Char]
