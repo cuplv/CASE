@@ -17,7 +17,9 @@ file := ""
 backend := "js"
 
 # python test files
-pyfiles := `cd pylang/tests && echo *.py`
+pyfiles := replace(`cd pylang/tests && find * -maxdepth 0 -name "*.py" ! -name "astDump*"`, "\n", " ")
+
+astfiles := `echo pylang/tests/*.json` 
 
 # argument for backend
 arg := if backend == "js" {
@@ -35,13 +37,15 @@ help:
   @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
   @echo 'build-concrete   := build concrete evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
+  @echo 'parser-test-all  := run parser on JSON ast test files'
+  @echo 'parser-test      := run parser on input'
 
 init:
   npm i @effekt-lang/effekt
 
 [working-directory: 'pylang/tests']
 build-json:
-  python3 astDump.py -f {{pyfiles}}
+  @python3 astDump.py -f {{pyfiles}}
 
 build-concrete:
   @if {{installed}}; then \
@@ -64,4 +68,15 @@ run-concrete *FILE:
   fi
 
 run-concrete-all:
-  ./out/concrete `echo pylang/tests/*.json` > concrete_output.txt
+  @if {{conc_built}}; then \
+    ./out/concrete{{os_ext}} {{astfiles}} > concrete_output.txt; \
+  else \
+    echo "> concrete evaluation not built, run 'just build-concrete'"; \
+  fi
+
+parser-test-all:
+  ./out/pyconv{{os_ext}}
+
+parser-test:
+  @python3 pylang/tests/astDump.py -i | ./out/pyconv{{os_ext}} -i 
+

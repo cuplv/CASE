@@ -75,13 +75,28 @@ def dump_ast_json_file(input_file: str, output_file: str = None, indent: int = 2
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description ="parse python file's AST to json")
     parser.add_argument('-f', '--files', nargs='+', help="files")
-    files = parser.parse_args().files
+    parser.add_argument('-i', '--input', action="store_true", help="input mode")
+    args = parser.parse_args()
+    files = args.files
+    user_input = args.input
     
-    for file in files:
-        try:
-            print(f"Processing {file}...")
-            dump_ast_json_file(file)
-        except FileNotFoundError:
-            print(f"File not found: {file}")
-        except SyntaxError as e:
-            print(f"Syntax error in {file}: {e}")
+    if user_input:
+        contents = []
+        while True:
+            try:
+                line = input()
+            except EOFError:
+                break
+            contents.append(line)
+        code = '\n'.join(contents)
+        print(dump_ast_json(code, indent=2))
+
+    if files is not None:
+        for file in files:
+            try:
+                print(f"Processing {file}...")
+                dump_ast_json_file(file)
+            except FileNotFoundError:
+                print(f"File not found: {file}")
+            except SyntaxError as e:
+                print(f"Syntax error in {file}: {e}")
