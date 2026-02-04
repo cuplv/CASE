@@ -191,6 +191,7 @@ def pythonAstToProg(json: JsonValue): Prog = json match {
         getField("value") match {
           case Number(n) => E(Cst(I(n.toInt)))
           case Bool(b)   => E(Cst(B(b)))
+          case String(s) => E(Cst(Str(s)))
           case _ => E(Cst(U()))
         }
       

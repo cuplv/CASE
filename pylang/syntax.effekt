@@ -3,6 +3,7 @@ module pylang/syntax
 type Val {
   I(i: Int)
   B(b: Bool)
+  Str(s: String)
   U()
 }
 
@@ -13,6 +14,10 @@ def println(v: Val) = v match {
   }
   case B(b) => {
     val s = "Bool(" ++ show(b) ++ ")"
+    println(s)
+  }
+  case Str(str) => {
+    val s = "Str(\"" ++ str ++ "\")"
     println(s)
   }
   case U() => println("()")

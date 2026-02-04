@@ -163,6 +163,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
   with plusI[Val] { (st, d1, d2) =>
     (d1, d2) match {
       case (I(i1), I(i2)) => resume((I(i1 + i2), st))
+      case (Str(i1), Str(i2)) => resume((Str(i1 ++ i2), st))
       case _ => resume((U(), st))
     }
   }
