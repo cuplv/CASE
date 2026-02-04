@@ -69,6 +69,41 @@
         }
       },
       "type_comment": null
+    },
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "a",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Compare",
+        "left": {
+          "type": "Name",
+          "id": "z",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "ops": [
+          {
+            "type": "Eq"
+          }
+        ],
+        "comparators": [
+          {
+            "type": "Constant",
+            "value": "cade",
+            "kind": null
+          }
+        ]
+      },
+      "type_comment": null
     }
   ],
   "type_ignores": []

@@ -187,6 +187,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
       (d1, d2) match {
         case (I(i1), I(i2)) => resume((B(i1 == i2), st))
         case (B(b1), B(b2)) => resume((B(b1 == b2), st))
+        case (Str(s1), Str(s2)) => resume((B(s1 == s2), st))
         case _ => resume((B(false), st))
       }
   }
