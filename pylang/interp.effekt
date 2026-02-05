@@ -64,7 +64,7 @@ interface Elimination[D, S] {
 // if its unsubstantiated why are you substantiating it?
 def eval[D, S](prog: (Prog, S)): (D, S) /
   {
-    Elimination[D]
+    Elimination[D, S]
   } = 
   val (e, st) = prog
   e match {
@@ -93,30 +93,30 @@ def eval[D, S](prog: (Prog, S)): (D, S) /
   }
 
 def eval_forwards[D]
-  { prog: => (D, State[D]) / {Elimination[D]} } : (D, State[D]) /
+  { prog: => (D, State[D]) / {Elimination[D, State[D]]} } : (D, State[D]) /
   {
     cstI[D, State[D]],
-    varI[D],
-    asgnI[D],
-    plusI[D],
-    minusI[D],
-    notI[D],
-    eqI[D],
-    ltI[D],
-    gtI[D],
-    leI[D],
-    geI[D],
-    ifI[D],
-    whileI[D],
+    varI[D, State[D]],
+    asgnI[D, State[D]],
+    plusI[D, State[D]],
+    minusI[D, State[D]],
+    notI[D, State[D]],
+    eqI[D, State[D]],
+    ltI[D, State[D]],
+    gtI[D, State[D]],
+    leI[D, State[D]],
+    geI[D, State[D]],
+    ifI[D, State[D]],
+    whileI[D, State[D]],
     recurse[D],
-    seqI[D],
-    skipI[D]
+    seqI[D, State[D]],
+    skipI[D, State[D]]
   } =
 {
   try {
     prog()
   }
-  with Elimination[D] {
+  with Elimination[D, State[D]] {
     def cstE(st, v) = {
       do cstI(st, v)
     }
