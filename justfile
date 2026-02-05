@@ -10,6 +10,9 @@ installed := path_exists("./node_modules/@effekt-lang/effekt/bin/effekt")
 # is concrete eval built
 conc_built := path_exists("./out/concrete"+os_ext)
 
+# is type eval built
+type_built := path_exists("./out/typecheck"+os_ext)
+
 # file to run
 file := ""
 
@@ -33,10 +36,13 @@ arg := if backend == "js" {
 help:
   @echo 'init             := install `effekt` language'
   @echo 'build-json       := build json ast of python test files'
-  @echo 'run-concrete     := run concrete evaluation on given json file'
-  @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
   @echo 'build-concrete   := build concrete evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
+  @echo 'build-type       := build typecheck evaluator, change backend with'
+  @echo '                  backend=js|llvm|chez'
+  @echo 'run-concrete     := run concrete evaluation on given json file'
+  @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
+  @echo 'run-type         := run type evaluation on given json file'
   @echo 'parser-test-all  := run parser on JSON ast test files'
   @echo 'parser-test      := run parser on input'
 
@@ -55,6 +61,14 @@ build-concrete:
     echo "> effekt not installed, run 'just init'"; \
   fi
 
+build-type:
+  @if {{installed}}; then \
+    echo "> building 'typecheck.effekt'..."; \
+    {{effekt}} -b --backend={{arg}} typecheck.effekt; \
+  else \
+    echo "> effekt not installed, run 'just init'"; \
+  fi
+
 run-concrete *FILE:
   @if {{conc_built}}; then \
     echo ">"{{FILE}}".py:"; \
@@ -65,6 +79,18 @@ run-concrete *FILE:
     ./out/concrete{{os_ext}} pylang/tests/{{FILE}}.json; \
   else \
     echo "> concrete evaluation not built, run 'just build-concrete'"; \
+  fi
+
+run-type *FILE:
+  @if {{type_built}}; then \
+    echo ">"{{FILE}}".py:"; \
+    echo "---------"; \
+    cat pylang/tests/{{FILE}}.py; \
+    echo "---------\n"; \
+    echo "> end state:"; \
+    ./out/typecheck{{os_ext}} pylang/tests/{{FILE}}.json; \
+  else \
+    echo "> type evaluation not built, run 'just build-type'"; \
   fi
 
 run-concrete-all:
