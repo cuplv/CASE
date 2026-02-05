@@ -14,30 +14,31 @@ import scanner
 effect get(st: State[Val], x: String): Val
 effect update(st: State[Val], x: String, v: Val): State[Val]
 
-def match_to_fold // this is really our eval
-  { prog: => (Val, State[Val]) / {Elimination[Val]} } : (Val, State[Val]) /
+def match_to_fold[D] // this is really our eval
+  { prog: => (D, State[D]) / {Elimination[D]} } : (D, State[D]) /
   {
-    cstI[Val, State[Val]],
-    varI[Val],
-    asgnI[Val],
-    plusI[Val],
-    minusI[Val],
-    notI[Val],
-    eqI[Val],
-    ltI[Val],
-    gtI[Val],
-    leI[Val],
-    geI[Val],
-    ifI[Val],
-    whileI[Val],
-    seqI[Val],
-    skipI[Val]
+    cstI[D, State[D]],
+    varI[D],
+    asgnI[D],
+    plusI[D],
+    minusI[D],
+    notI[D],
+    eqI[D],
+    ltI[D],
+    gtI[D],
+    leI[D],
+    geI[D],
+    ifI[D],
+    whileI[D],
+    recurse[D],
+    seqI[D],
+    skipI[D]
   } =
 {
   try {
     prog()
   }
-  with Elimination[Val] {
+  with Elimination[D] {
     def cstE(st, v) = {
       do cstI(st, v)
     }
@@ -108,8 +109,8 @@ def match_to_fold // this is really our eval
       val (guardVal, st1) = resume((E(guardExpr), st))
       val (bodyVal, st2) = resume((S(bodyStmt), st1))
       val (wV, wS) = do whileI(st1, st2, guardVal, bodyVal)
-      wV match {
-        case B(true) => resume((S(While(guardExpr, bodyStmt)), st2))
+      do recurse(wV) match { // *does this break cumulativity...
+        case true => resume((S(While(guardExpr, bodyStmt)), wS))
         case _ => resume((E(Cst(U())), st1))
       }
     }
@@ -131,19 +132,6 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     with match_to_fold()
     eval((prog, init))
   }
-  // introduction handlers produce concrete syntax::Val-like D values
-  // with intI[Val] { (st, i) =>
-  //   val result = I(i)
-  //   resume((result, st))
-  // }
-  // with boolI[Val] { (st, b) =>
-  //   val result = B(b)
-  //   resume((result, st))
-  // }
-  // with unitI[Val] { (st) =>
-  //   val result = U()
-  //   resume((result, st))
-  // }
   with cstI[Val, State[Val]] {(st, v) => 
     resume((v, st))
   }
@@ -233,9 +221,15 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
   }
   with whileI[Val] {(stG, stB, g, b) =>
     g match {
-      case B(true) => resume((g, stG))
-      case B(false) => resume((g, stB))
+      case B(true) => resume((g, stB))
+      case B(false) => resume((g, stG))
       case _ => resume((U(), stG))
+    }
+  }
+  with recurse[Val] {(v) =>
+    v match {
+      case B(true) => resume(true)
+      case _ => resume(false)
     }
   }
   with seqI[Val] {(_, st2, _, v2) => resume((v2, st2))}

@@ -38,7 +38,9 @@ effect skipI[D](st: State[D]): (D, State[D])
 // lowering effects
 effect assume[D](st: State[D], guard: D, e: D): (D, State[D])
 effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
-  
+
+effect recurse[D](v:D):Bool
+
 // elimination effects
 interface Elimination[D] {
   def cstE(st: State[D], x:Val) : (D, State[D])
@@ -62,7 +64,6 @@ interface Elimination[D] {
 // if its unsubstantiated why are you substantiating it?
 def eval[D](prog: (Prog, State[D])): (D, State[D]) /
   {
-    varI[D],
     Elimination[D]
   } = 
   val (e, st) = prog
@@ -80,7 +81,7 @@ def eval[D](prog: (Prog, State[D])): (D, State[D]) /
       case Gt(e1, e2) => eval(do gtE(st, e1, e2))
       case Le(e1, e2) => eval(do leE(st, e1, e2))
       case Ge(e1, e2) => eval(do geE(st, e1, e2))
-      case Var(x) => do varI(st,x)
+      case Var(x) => eval(do varE(st,x))
     }
     case S(stmt) => stmt match {
       case Asgn(x, v) => eval(do asgnE(st, x,v))
