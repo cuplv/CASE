@@ -1,6 +1,11 @@
+module symbolic
+
+import pylang/interp
+import pylang/syntax
+
 type SymExpr{
     // base
-    Cst(v: Int)
+    Cst(v : Expr)
     Var(x: String)
 
     // logic
@@ -14,3 +19,76 @@ type SymExpr{
     GT(e1: SymExpr, e2: SymExpr)
 }
 
+// symbolic library functions:
+def replace(e:SymExpr, ident: String, value: SymExpr): SymExpr = {
+    e match{
+        case Cst(_) => e
+        case Var(x) and x == ident => value
+        case Var(_) => e
+        case Not(e1) => Not(replace(e1, ident, value))
+        case And(e1, e2) => And(replace(e1, ident, value), replace(e2, ident, value))
+        case Or(e1, e2) => Or(replace(e1, ident, value), replace(e2, ident, value))
+        case Eq(e1, e2) => Eq(replace(e1, ident, value), replace(e2, ident, value))
+        case LT(e1, e2) => LT(replace(e1, ident, value), replace(e2, ident, value))
+        case GT(e1, e2) => GT(replace(e1, ident, value), replace(e2, ident, value))
+    }
+
+}
+
+// --------------------------------------------
+// Elimination handlers for the symbolic domain
+
+def symbolicElim[S] {prog: => (SymExpr, S)/Elimination[SymExpr, S]} : (SymExpr, S)/{
+    cstI[SymExpr, S],
+    varI[SymExpr, S],
+    asgnI[SymExpr, S],
+    plusI[SymExpr, S],
+    minusI[SymExpr, S],
+    notI[SymExpr, S],
+    eqI[SymExpr, S],
+    ltI[SymExpr, S],
+    gtI[SymExpr, S],
+    leI[SymExpr, S],
+    geI[SymExpr, S],
+    ifI[SymExpr, S],
+    whileI[SymExpr, S],
+    seqI[SymExpr, S],
+    skipI[SymExpr, S]
+}= {
+    try prog()
+    with Elimination[SymExpr, S]{
+        def cstE(st, v) = {
+            do cstI(st, v)
+        }
+        def varE(st, x) = {
+            do varI(st, x)
+        }
+        def asgnE(st, x, v) = {
+            do asgnI(st, x, Cst(v))
+        }
+    }
+}
+
+// ---------------------------------------------
+// Introduction handlers for the symbolic domain
+
+def symbolicCstI[S] {prog: => (SymExpr, S)/cstI[SymExpr, S]}: (SymExpr, S) = {
+    try prog()
+    with cstI[SymExpr, S] {(st, v) =>
+        (Cst(v), st)
+    }
+}
+
+def symbolicVarI[S] {prog: => (SymExpr, S)/varI[SymExpr, S]}: (SymExpr, S) = {
+    try prog()
+    with varI[SymExpr, S] {(st, x) =>
+        (Var(x), st)
+    }
+}
+
+def symbolicAsgnI[S] {prog: => (SymExpr, S)/asgnI[SymExpr, S]}: (SymExpr, S) = {
+    try prog()
+    with asgnI[SymExpr, S] {(st, x, v) =>
+        replace(st, x, v)
+    }
+}

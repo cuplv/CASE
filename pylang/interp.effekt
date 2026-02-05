@@ -21,49 +21,49 @@ type State[D] {
 effect cstI[D, S](st: S, v: Val): (D, S) 
 
 // introduction effects
-effect varI[D](st: State[D], e1: String): (D, State[D])
-effect asgnI[D](st: State[D], x: String, v: D): (D, State[D])
-effect plusI[D](st: State[D], d1: D, d2: D): (D, State[D])
-effect minusI[D](st: State[D], e1: D, e2: D): (D, State[D])
-effect notI[D](st: State[D], e: D): (D, State[D])
-effect eqI[D](st: State[D], e1: D, e2: D): (D, State[D])
-effect ltI[D](st: State[D], e1: D, e2: D): (D, State[D])
-effect gtI[D](st: State[D], e1: D, e2: D): (D, State[D])
-effect leI[D](st: State[D], e1: D, e2: D): (D, State[D])
-effect geI[D](st: State[D], e1: D, e2: D): (D, State[D])
-effect ifI[D](stT: State[D], stF: State[D], g: D, t: D, f: D): (D, State[D])
-effect whileI[D](stT: State[D], stF: State[D], g: D, b: D): (D, State[D])
-effect seqI[D](st1: State[D], st2: State[D], e1: D, e2: D): (D, State[D])
-effect skipI[D](st: State[D]): (D, State[D])
+effect varI[D, S](st: S, e1: String): (D, S)
+effect asgnI[D, S](st: S, x: String, v: D): (D, S)
+effect plusI[D, S](st: S, d1: D, d2: D): (D, S)
+effect minusI[D, S](st: S, e1: D, e2: D): (D, S)
+effect notI[D, S](st: S, e: D): (D, S)
+effect eqI[D, S](st: S, e1: D, e2: D): (D, S)
+effect ltI[D, S](st: S, e1: D, e2: D): (D, S)
+effect gtI[D, S](st: S, e1: D, e2: D): (D, S)
+effect leI[D, S](st: S, e1: D, e2: D): (D, S)
+effect geI[D, S](st: S, e1: D, e2: D): (D, S)
+effect ifI[D, S](stT: S, stF: S, g: D, t: D, f: D): (D, S)
+effect whileI[D, S](stT: S, stF: S, g: D, b: D): (D, S)
+effect seqI[D, S](st1: S, st2: S, e1: D, e2: D): (D, S)
+effect skipI[D, S](st: S): (D, S)
 // lowering effects
-effect assume[D](st: State[D], guard: D, e: D): (D, State[D])
-effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
+effect assume[D, S](st: S, guard: D, e: D): (D, S)
+effect assumeNot[D, S](st: S, guard: D, e: D): (D, S)
   
 // elimination effects
-interface Elimination[D] {
-  def cstE(st: State[D], x:Val) : (D, State[D])
-  def varE(st: State[D], x: String): (Prog, State[D])
-  def asgnE(st: State[D], x: String, v: Expr): (Prog, State[D])
-  def plusE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
-  def minusE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
-  def notE(st: State[D], e: Expr): (Prog, State[D])
-  def eqE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
-  def ltE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
-  def gtE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
-  def leE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
-  def geE(st: State[D], e1: Expr, e2: Expr): (Prog, State[D])
-  def ifE(st: State[D], g: Expr, t: Stmt, f: Stmt): (Prog, State[D])
-  def whileE(st: State[D], g: Expr, b: Stmt): (Prog, State[D])
-  def seqE(st: State[D], e1: Stmt, e2: Stmt): (Prog, State[D])
-  def skipE(st: State[D]): (D, State[D])
+interface Elimination[D, S] {
+  def cstE(st: S, x:Val) : (D, S)
+  def varE(st: S, x: String): (Prog, S)
+  def asgnE(st: S, x: String, v: Expr): (Prog, S)
+  def plusE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def minusE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def notE(st: S, e: Expr): (Prog, S)
+  def eqE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def ltE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def gtE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def leE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def geE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def ifE(st: S, g: Expr, t: Stmt, f: Stmt): (Prog, S)
+  def whileE(st: S, g: Expr, b: Stmt): (Prog, S)
+  def seqE(st: S, e1: Stmt, e2: Stmt): (Prog, S)
+  def skipE(st: S): (D, S)
 }
 
 // unsubstantiated eval
 // if its unsubstantiated why are you substantiating it?
-def eval[D](prog: (Prog, State[D])): (D, State[D]) /
+def eval[D, S](prog: (Prog, S)): (D, S) /
   {
-    varI[D],
-    Elimination[D]
+    varI[D, S],
+    Elimination[D, S]
   } = 
   val (e, st) = prog
   e match {
