@@ -1,0 +1,16 @@
+type SymExpr{
+    // base
+    Cst(v: Int)
+    Var(x: String)
+
+    // logic
+    Not(e1: SymExpr)
+    And(e1: SymExpr, e2: SymExpr)
+    Or(e1: SymExpr, e2: SymExpr)
+    
+    //Comparsion
+    Eq(e1: SymExpr, e2: SymExpr)
+    LT(e1: SymExpr, e2: SymExpr)
+    GT(e1: SymExpr, e2: SymExpr)
+}
+
