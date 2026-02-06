@@ -50,7 +50,7 @@ def canCompare(t1: Type, t2: Type): Bool = {
     case (TBool(), TInt()) => true
     case (TBool(), TBool()) => true
     case (TStr(), TStr()) => true
-    case _ => false
+    case _ => println("Error Comparing: " ++ toStr(t1) ++ ", " ++ toStr(t2)); false
   }
 }
 
@@ -109,7 +109,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
           case (TInt(), TBool()) => TInt()
           case (TBool(), TInt()) => TInt()
           case (TStr(), TStr()) => TStr()
-          case _ => TError()
+          case _ => println("Error Adding: " ++ toStr(t1) ++ ", " ++ toStr(t2)); TError()
         }
       }
     }
@@ -123,7 +123,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
           case (TInt(), TInt()) => TInt()
           case (TInt(), TBool()) => TInt()
           case (TBool(), TInt()) => TInt()
-          case _ => TError()
+          case _ => println("Error Subtracting: " ++ toStr(t1) ++ ", " ++ toStr(t2)); TError()
         }
       }
     }
@@ -134,6 +134,8 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     val result = ts.toList.map { t =>
       t match {
         case TBool() => TBool()
+        case TInt() => TBool()
+        case TStr() => TBool()
         case _ => TError()
       }
     }
@@ -148,7 +150,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
             case (TInt(), TInt()) => TBool()
             case (TBool(), TBool()) => TBool()
             case (TStr(), TStr()) => TBool()
-            case _ => TError()
+            case _ => println("Error Comparing: " ++ toStr(t1) ++ ", " ++ toStr(t2)); TError()
           }
         }
       }
