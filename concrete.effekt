@@ -39,6 +39,12 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
   with plusI[Val] { (st, d1, d2) =>
     (d1, d2) match {
       case (I(i1), I(i2)) => resume((I(i1 + i2), st))
+      case (I(i1), B(i2)) =>
+        val bval = i2 match {case true => 1; case false => 0}
+        resume((I(i1 + bval), st))
+      case (B(i1), I(i2)) =>
+        val bval = i1 match {case true => 1; case false => 0}
+        resume((I(i2 + bval), st))
       case (Str(i1), Str(i2)) => resume((Str(i1 ++ i2), st))
       case _ => resume((U(), st))
     }
@@ -47,6 +53,12 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
   with minusI[Val] { (st, d1, d2) =>
     (d1, d2) match {
       case (I(i1), I(i2)) => resume((I(i1 - i2), st))
+      case (I(i1), B(i2)) =>
+        val bval = i2 match {case true => 1; case false => 0}
+        resume((I(i1 - bval), st))
+      case (B(i1), I(i2)) =>
+        val bval = i1 match {case true => 1; case false => 0}
+        resume((I(i2 - bval), st))
       case _ => resume((U(), st))
     }
   }
