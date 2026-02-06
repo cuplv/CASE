@@ -113,6 +113,15 @@ def eval_forwards[D]
 Demo
 ===
 
+```scala
+def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
+  try {
+    with eval_forwards[Val, State[Val]]
+    eval((prog, init))
+  }
+  //...
+```
+
 ```bash +exec
 just run-concrete testIfType
 ```
@@ -121,6 +130,15 @@ just run-concrete testIfType
 
 Demo
 ===
+
+```scala
+def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]])
+= {
+  try {
+    with eval_forwards[Set[Type], State[Set[Type]]]
+    eval((prog, init))
+  }
+```
 
 ```bash +exec
 just run-type testIfType
