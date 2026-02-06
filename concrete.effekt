@@ -130,38 +130,36 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
   with skipI[Val] {(st) => resume((U(), st))}
 }
 
-namespace test {
-  def main() = {
-    with on[WrongFormat].panic
-    with on[IOError].panic
-    val init: Map[String, Val] = map::empty(box compareStringBytes)
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val init: Map[String, Val] = map::empty(box compareStringBytes)
 
-    // parse files to evaluate
-    val file: List[String] = args::commandLineArgs()
-    file match {
-      case Cons(_, _) => {
-        // for each file passed in
-        file.foreach{ (f) =>
-          // read json ast
-          val jsonFile: String = filesystem::readFile(f)
-          feed(jsonFile) {
-            with scanner[Char]
-            // decode into effekt
-            val (_, jsonVal) = build { decodeJson() }
-            // parse to Prog
-            val parsed = pythonAstToProg(jsonVal)
-            // evaluate
-            val (_, s) = run(parsed, St(init))
-            // extract end state
-            val m = s match {case St(a) => a}
-            // print output
-            println("---------")
-            m.foreach { (k,v) => println(k); println(v)}
-            println("---------")
-          }
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        // read json ast
+        val jsonFile: String = filesystem::readFile(f)
+        feed(jsonFile) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          // evaluate
+          val (_, s) = run(parsed, St(init))
+          // extract end state
+          val m = s match {case St(a) => a}
+          // print output
+          println("---------")
+          m.foreach { (k,v) => println(k); println(v)}
+          println("---------")
         }
       }
-      case Nil() => println("no file passed in")
     }
+    case Nil() => println("no file passed in")
   }
 }
