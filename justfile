@@ -87,7 +87,7 @@ run-type *FILE:
     echo "> end state:"; \
     ./out/typecheck{{os_ext}} pylang/tests/{{FILE}}.json; \
   else \
-    echo "> type evaluation not built, run 'just build-concrete'"; \
+    echo "> type evaluation not built, run 'just build-type'"; \
   fi
 
 run-concrete-all:
