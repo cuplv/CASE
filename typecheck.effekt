@@ -33,16 +33,54 @@ def println(ts: List[Type]) = {
   println("}")
 }
 
+def typeEquals(t1: Type, t2: Type): Bool = {
+  (t1, t2) match {
+    case (TInt(), TInt()) => true
+    case (TBool(), TBool()) => true
+    case (TStr(), TStr()) => true
+    case (TUnit(), TUnit()) => true
+    case (TError(), TError()) => true
+    case _ => false
+  }
+}
+
+def canCompare(t1: Type, t2: Type): Bool = {
+  (t1, t2) match {
+    case (TInt(), TInt()) => true
+    case (TInt(), TBool()) => true
+    case (TBool(), TInt()) => true
+    case (TBool(), TBool()) => true
+    case (TStr(), TStr()) => true
+    case _ => false
+  }
+}
+
+def addIfUnique(ts: List[Type], t: Type): List[Type] = {
+  if (ts.any { existing => typeEquals(existing, t) }) {
+    ts
+  } else {
+    ts.append([t])
+  }
+}
+
+def mergeTypeLists(existing: List[Type], newTypes: List[Type]): List[Type] = {
+  newTypes match {
+    case Nil() => existing
+    case Cons(t, rest) => mergeTypeLists(addIfUnique(existing, t), rest)
+  }
+}
+
 def mergeStates(st1: State[List[Type]], st2: State[List[Type]]): State[List[Type]] = {
   val m1 = st1 match { case St(a) => a }
   val m2 = st2 match { case St(a) => a }
   var merged = m1
-  map::foreach(m2) { (k, v) =>
+  map::foreach(m2) { (k, newTypes) =>
     val existing = map::get[String, List[Type]](merged, k) match {
       case Some(types) => types
       case None() => []
     }
-    merged = merged.put(k, existing.append(v))
+    val updated = mergeTypeLists(existing, newTypes)
+    merged = merged.put(k, updated)
   }
   St(merged)
 }
@@ -83,6 +121,8 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
       ts2.map { t2 =>
         (t1, t2) match {
           case (TInt(), TInt()) => TInt()
+          case (TInt(), TBool()) => TInt()
+          case (TBool(), TInt()) => TInt()
           case (TStr(), TStr()) => TStr()
           case _ => TError()
         }
@@ -96,6 +136,8 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
       ts2.map { t2 =>
         (t1, t2) match {
           case (TInt(), TInt()) => TInt()
+          case (TInt(), TBool()) => TInt()
+          case (TBool(), TInt()) => TInt()
           case _ => TError()
         }
       }
@@ -114,14 +156,14 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
   }
 
   with eqI[List[Type]] {
-    def eqI(st, ts1, ts2) = {
+    (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
         ts2.map { t2 =>
           (t1, t2) match {
             case (TInt(), TInt()) => TBool()
             case (TBool(), TBool()) => TBool()
             case (TStr(), TStr()) => TBool()
-            case _ => TBool()
+            case _ => TError()
           }
         }
       }
@@ -130,40 +172,40 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
   }
 
   with ltI[List[Type]] {
-    def ltI(st, ts1, ts2) = {
+    (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
         ts2.map { t2 =>
-          TBool()
+          if (canCompare(t1, t2)) TBool() else TError()
         }
       }
       resume((result, st))
     }
   }
   with gtI[List[Type]] {
-    def gtI(st, ts1, ts2) = {
+    (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
         ts2.map { t2 =>
-          TBool()
+          if (canCompare(t1, t2)) TBool() else TError()
         }
       }
       resume((result, st))
     }
   }
   with leI[List[Type]] {
-    def leI(st, ts1, ts2) = {
+    (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
         ts2.map { t2 =>
-          TBool()
+          if (canCompare(t1, t2)) TBool() else TError()
         }
       }
       resume((result, st))
     }
   }
   with geI[List[Type]] {
-    def geI(st, ts1, ts2) = {
+    (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
         ts2.map { t2 =>
-          TBool()
+          if (canCompare(t1, t2)) TBool() else TError()
         }
       }
       resume((result, st))
