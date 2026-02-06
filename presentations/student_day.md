@@ -7,10 +7,10 @@ theme:
 Algebraic Effects
 ===
 
-- side effects are tracked at the type level
-- handlers give semantics to an effect
-    - remove the effect from the type signature
-- a function with effects cannot be run (executed) until it's effects are handled
+# side effects are tracked at the type level
+# handlers give semantics to an effect
+## remove the effect from the type signature
+## a function with effects cannot be run (executed) until it's effects are handled
 
 <!-- end_slide -->
 
@@ -71,9 +71,7 @@ def run(e: Exp): Interval = {
 Modulating Control Flow
 ===
 
-- by moving recursive `eval` calls outside of the effect invocation
-    + we pass the burden of determining control flow to the effect handler
-    + this allows us to create "control flow handlers" for different abstract analysis
+# moving recursive `eval` calls outside of the effect invocation
 
 ```scala
 // unsubstantiated eval
@@ -82,7 +80,7 @@ def eval[D](prog: (Prog, State[D])): (D, State[D]) / { Elimination[D] } =
   e match {
     case E(e) => e match  {
       //...
-      case Plus(e1, e2) => eval(do plusE(st, e1, e2))
+      case Plus(e1, e2) => eval(do plusE(st, e1, e2)) // <---[here]
       //...
     }
   }
@@ -129,3 +127,14 @@ just run-type testIfType
 ```
 
 <!-- end_slide -->
+
+Demo
+===
+
+```bash +exec
+just run-type testIfTypeError
+```
+
+<!-- end_slide -->
+
+## Thank you
