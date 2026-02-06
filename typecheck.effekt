@@ -55,6 +55,20 @@ def canCompare(t1: Type, t2: Type): Bool = {
   }
 }
 
+def dedupTypes(ts: List[Type]): List[Type] = {
+  ts match {
+    case Nil() => Nil()
+    case Cons(t, rest) => {
+      val deduped = dedupTypes(rest)
+      if (deduped.any { existing => typeEquals(existing, t) }) {
+        deduped
+      } else {
+        Cons(t, deduped)
+      }
+    }
+  }
+}
+
 def addIfUnique(ts: List[Type], t: Type): List[Type] = {
   if (ts.any { existing => typeEquals(existing, t) }) {
     ts
@@ -128,7 +142,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
         }
       }
     }
-    resume((result, st))
+    resume((dedupTypes(result), st))
   }
 
   with minusI[List[Type]] { (st, ts1, ts2) =>
@@ -142,7 +156,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
         }
       }
     }
-    resume((result, st))
+    resume((dedupTypes(result), st))
   }
 
   with notI[List[Type]] { (st, ts) =>
@@ -152,7 +166,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
         case _ => TError()
       }
     }
-    resume((result, st))
+    resume((dedupTypes(result), st))
   }
 
   with eqI[List[Type]] {
@@ -167,7 +181,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
           }
         }
       }
-      resume((result, st))
+      resume((dedupTypes(result), st))
     }
   }
 
@@ -178,7 +192,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
           if (canCompare(t1, t2)) TBool() else TError()
         }
       }
-      resume((result, st))
+      resume((dedupTypes(result), st))
     }
   }
   with gtI[List[Type]] {
@@ -188,7 +202,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
           if (canCompare(t1, t2)) TBool() else TError()
         }
       }
-      resume((result, st))
+      resume((dedupTypes(result), st))
     }
   }
   with leI[List[Type]] {
@@ -198,7 +212,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
           if (canCompare(t1, t2)) TBool() else TError()
         }
       }
-      resume((result, st))
+      resume((dedupTypes(result), st))
     }
   }
   with geI[List[Type]] {
@@ -208,12 +222,12 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
           if (canCompare(t1, t2)) TBool() else TError()
         }
       }
-      resume((result, st))
+      resume((dedupTypes(result), st))
     }
   }
 
   with ifI[List[Type]] {(stT, stF, ts, tsT, tsF) =>
-    val result = tsT.append(tsF)
+    val result = dedupTypes(tsT.append(tsF))
     val merged = mergeStates(stT, stF)
     resume((result, merged))
   }

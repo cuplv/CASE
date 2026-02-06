@@ -114,6 +114,41 @@
         }
       },
       "type_comment": null
+    },
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "y",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Compare",
+        "left": {
+          "type": "Name",
+          "id": "y",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "ops": [
+          {
+            "type": "Lt"
+          }
+        ],
+        "comparators": [
+          {
+            "type": "Constant",
+            "value": 4,
+            "kind": null
+          }
+        ]
+      },
+      "type_comment": null
     }
   ],
   "type_ignores": []
