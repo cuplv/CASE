@@ -13,14 +13,8 @@ type State[D] {
   St(st: Map[String, D])
 }
 
-// introduction beta effects
-// effect intI[D](st: State[D], i: Int): (D, State[D])
-// effect boolI[D](st: State[D], i: Bool): (D, State[D])
-// effect unitI[D](st: State[D]): (D, State[D])
-
-effect cstI[D, S](st: S, v: Val): (D, S) 
-
 // introduction effects
+effect cstI[D, S](st: S, v: Val): (D, S) 
 effect varI[D, S](st: S, e1: String): (D, S)
 effect asgnI[D, S](st: S, x: String, v: D): (D, S)
 effect plusI[D, S](st: S, d1: D, d2: D): (D, S)
@@ -64,14 +58,11 @@ interface Elimination[D, S] {
 // if its unsubstantiated why are you substantiating it?
 def eval[D, S](prog: (Prog, S)): (D, S) /
   {
-    Elimination[D]
+    Elimination[D, S]
   } = 
   val (e, st) = prog
   e match {
     case E(e) => e match  {
-      // case Num(i) => do intI(st,i)
-      // case Boolean(b) => do boolI(st,b)
-      // case Unit() => do unitI(st)
       case Cst(v) => do cstE(st, v)
       case Plus(e1, e2) => eval(do plusE(st, e1, e2))
       case Minus(e1, e2) => eval(do minusE(st, e1, e2))
@@ -92,31 +83,31 @@ def eval[D, S](prog: (Prog, S)): (D, S) /
     }
   }
 
-def eval_forwards[D]
-  { prog: => (D, State[D]) / {Elimination[D]} } : (D, State[D]) /
+def eval_forwards[D, S]
+  { prog: => (D, S) / {Elimination[D, S]} } : (D, S) /
   {
-    cstI[D, State[D]],
-    varI[D],
-    asgnI[D],
-    plusI[D],
-    minusI[D],
-    notI[D],
-    eqI[D],
-    ltI[D],
-    gtI[D],
-    leI[D],
-    geI[D],
-    ifI[D],
-    whileI[D],
+    cstI[D, S],
+    varI[D, S],
+    asgnI[D, S],
+    plusI[D, S],
+    minusI[D, S],
+    notI[D, S],
+    eqI[D, S],
+    ltI[D, S],
+    gtI[D, S],
+    leI[D, S],
+    geI[D, S],
+    ifI[D, S],
+    whileI[D, S],
     recurse[D],
-    seqI[D],
-    skipI[D]
+    seqI[D, S],
+    skipI[D, S]
   } =
 {
   try {
     prog()
   }
-  with Elimination[D] {
+  with Elimination[D, S] {
     def cstE(st, v) = {
       do cstI(st, v)
     }

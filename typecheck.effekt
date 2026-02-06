@@ -72,7 +72,7 @@ def mergeStates(st1: State[Set[Type]], st2: State[Set[Type]]): State[Set[Type]] 
 
 def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
   try {
-    with eval_forwards[Set[Type]]
+    with eval_forwards[Set[Type], State[Set[Type]]]
     eval((prog, init))
   }
 
@@ -86,7 +86,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     resume((set::fromListGeneric(ts), st))
   }
 
-  with varI[Set[Type]] { (st, x) =>
+  with varI[Set[Type], State[Set[Type]]] { (st, x) =>
     val m: Map[String, Set[Type]] = st match {case St(a) => a}
     val ts = map::get[String, Set[Type]](m, x) match {
       case Some(types) => types
@@ -95,13 +95,13 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     resume((ts, st))
   }
 
-  with asgnI[Set[Type]] { (st, x, ts) =>
+  with asgnI[Set[Type], State[Set[Type]]] { (st, x, ts) =>
     val m = st match {case St(a) => a}
     val newState = m.put(x, ts)
     resume((set::fromListGeneric([TUnit()]), St(newState)))
   }
 
-  with plusI[Set[Type]] { (st, ts1, ts2) =>
+  with plusI[Set[Type], State[Set[Type]]] { (st, ts1, ts2) =>
     val result = ts1.toList.flatMap { t1 =>
       ts2.toList.map { t2 =>
         (t1, t2) match {
@@ -116,7 +116,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     resume((set::fromListGeneric(result), st))
   }
 
-  with minusI[Set[Type]] { (st, ts1, ts2) =>
+  with minusI[Set[Type], State[Set[Type]]] { (st, ts1, ts2) =>
     val result = ts1.toList.flatMap { t1 =>
       ts2.toList.map { t2 =>
         (t1, t2) match {
@@ -130,7 +130,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     resume((set::fromListGeneric(result), st))
   }
 
-  with notI[Set[Type]] { (st, ts) =>
+  with notI[Set[Type], State[Set[Type]]] { (st, ts) =>
     val result = ts.toList.map { t =>
       t match {
         case TBool() => TBool()
@@ -140,7 +140,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     resume((set::fromListGeneric(result), st))
   }
 
-  with eqI[Set[Type]] {
+  with eqI[Set[Type], State[Set[Type]]] {
     (st, ts1, ts2) => {
       val result = ts1.toList.flatMap { t1 =>
         ts2.toList.map { t2 =>
@@ -156,7 +156,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     }
   }
 
-  with ltI[Set[Type]] {
+  with ltI[Set[Type], State[Set[Type]]] {
     (st, ts1, ts2) => {
       val result = ts1.toList.flatMap { t1 =>
         ts2.toList.map { t2 =>
@@ -167,7 +167,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     }
   }
 
-  with gtI[Set[Type]] {
+  with gtI[Set[Type], State[Set[Type]]] {
     (st, ts1, ts2) => {
       val result = ts1.toList.flatMap { t1 =>
         ts2.toList.map { t2 =>
@@ -178,7 +178,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     }
   }
 
-  with leI[Set[Type]] {
+  with leI[Set[Type], State[Set[Type]]] {
     (st, ts1, ts2) => {
       val result = ts1.toList.flatMap { t1 =>
         ts2.toList.map { t2 =>
@@ -189,7 +189,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     }
   }
 
-  with geI[Set[Type]] {
+  with geI[Set[Type], State[Set[Type]]] {
     (st, ts1, ts2) => {
       val result = ts1.toList.flatMap { t1 =>
         ts2.toList.map { t2 =>
@@ -200,13 +200,13 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     }
   }
 
-  with ifI[Set[Type]] {(stT, stF, ts, tsT, tsF) =>
+  with ifI[Set[Type], State[Set[Type]]] {(stT, stF, ts, tsT, tsF) =>
     val result: Set[Type] = set::union(tsT, tsF)
     val merged = mergeStates(stT, stF)
     resume((result, merged))
   }
 
-  with whileI[Set[Type]] {(stG, stB, ts, tsB) =>
+  with whileI[Set[Type], State[Set[Type]]] {(stG, stB, ts, tsB) =>
     val merged = mergeStates(stG, stB)
     resume((set::fromListGeneric([TUnit()]), merged))
   }
@@ -219,9 +219,9 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     resume(shouldRecurse)
   }
 
-  with seqI[Set[Type]] {(_, st2, _, ts2) => resume((ts2, st2))}
+  with seqI[Set[Type], State[Set[Type]]] {(_, st2, _, ts2) => resume((ts2, st2))}
 
-  with skipI[Set[Type]] {(st) => resume((set::fromListGeneric([TUnit()]), st))}
+  with skipI[Set[Type], State[Set[Type]]] {(st) => resume((set::fromListGeneric([TUnit()]), st))}
 }
 
 def main() = {

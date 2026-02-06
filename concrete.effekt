@@ -13,7 +13,7 @@ import scanner
 
 def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
   try {
-    with eval_forwards[Val]
+    with eval_forwards[Val, State[Val]]
     eval((prog, init))
   }
 
@@ -21,7 +21,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     resume((v, st))
   }
 
-  with varI[Val] { (st, x) =>
+  with varI[Val, State[Val]] { (st, x) =>
     val m: Map[String, Val] = st match {case St(a) => a}
     val v = map::get[String,Val](m, x) match {
       case Some(i) => i
@@ -30,13 +30,13 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     resume((v, st))
   }
 
-  with asgnI[Val] { (st, x, v) =>
+  with asgnI[Val, State[Val]] { (st, x, v) =>
     val m = st match {case St(a) => a}
     val newState = m.put(x, v)
     resume((U(), St(newState)))
   }
 
-  with plusI[Val] { (st, d1, d2) =>
+  with plusI[Val, State[Val]] { (st, d1, d2) =>
     (d1, d2) match {
       case (I(i1), I(i2)) => resume((I(i1 + i2), st))
       case (I(i1), B(i2)) =>
@@ -50,7 +50,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
   }
 
-  with minusI[Val] { (st, d1, d2) =>
+  with minusI[Val, State[Val]] { (st, d1, d2) =>
     (d1, d2) match {
       case (I(i1), I(i2)) => resume((I(i1 - i2), st))
       case (I(i1), B(i2)) =>
@@ -63,7 +63,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
   }
 
-  with notI[Val] { (st, d) =>
+  with notI[Val, State[Val]] { (st, d) =>
     d match {
       case B(true) => resume((B(false), st))
       case B(false) => resume((B(true), st))
@@ -71,7 +71,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
   }
 
-  with eqI[Val] {
+  with eqI[Val, State[Val]] {
     def eqI(st, d1, d2) =
       (d1, d2) match {
         case (I(i1), I(i2)) => resume((B(i1 == i2), st))
@@ -81,7 +81,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
       }
   }
 
-  with ltI[Val] {
+  with ltI[Val, State[Val]] {
     def ltI(st, d1, d2) =
       (d1, d2) match {
         case (I(i1), I(i2)) => resume((B(i1 < i2), st))
@@ -89,7 +89,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
         case _ => resume((B(false), st))
       }
   }
-  with gtI[Val] {
+  with gtI[Val, State[Val]] {
     def gtI(st, d1, d2) =
       (d1, d2) match {
         case (I(i1), I(i2)) => resume((B(i1 > i2), st))
@@ -97,7 +97,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
         case _ => resume((B(false), st))
       }
   }
-  with leI[Val] {
+  with leI[Val, State[Val]] {
     def leI(st, d1, d2) =
       (d1, d2) match {
         case (I(i1), I(i2)) => resume((B(i1 <= i2), st))
@@ -105,7 +105,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
         case _ => resume((B(false), st))
       }
   }
-  with geI[Val] {
+  with geI[Val, State[Val]] {
     def geI(st, d1, d2) =
       (d1, d2) match {
         case (I(i1), I(i2)) => resume((B(i1 >= i2), st))
@@ -114,7 +114,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
       }
   }
 
-  with ifI[Val] {(stT, stF, g, t, f) =>
+  with ifI[Val, State[Val]] {(stT, stF, g, t, f) =>
     g match {
       case B(true) => resume((t, stT))
       case B(false) => resume((f, stF))
@@ -122,7 +122,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
   }
 
-  with whileI[Val] {(stG, stB, g, b) =>
+  with whileI[Val, State[Val]] {(stG, stB, g, b) =>
     g match {
       case B(true) => resume((g, stB))
       case B(false) => resume((g, stG))
@@ -137,9 +137,9 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
   }
 
-  with seqI[Val] {(_, st2, _, v2) => resume((v2, st2))}
+  with seqI[Val, State[Val]] {(_, st2, _, v2) => resume((v2, st2))}
 
-  with skipI[Val] {(st) => resume((U(), st))}
+  with skipI[Val, State[Val]] {(st) => resume((U(), st))}
 }
 
 def main() = {
