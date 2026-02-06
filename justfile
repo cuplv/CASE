@@ -10,6 +10,9 @@ installed := path_exists("./node_modules/@effekt-lang/effekt/bin/effekt")
 # is concrete eval built
 conc_built := path_exists("./out/concrete"+os_ext)
 
+# is type eval built
+type_built := path_exists("./out/typecheck"+os_ext)
+
 # file to run
 file := ""
 
@@ -65,6 +68,18 @@ run-concrete *FILE:
     ./out/concrete{{os_ext}} pylang/tests/{{FILE}}.json; \
   else \
     echo "> concrete evaluation not built, run 'just build-concrete'"; \
+  fi
+
+run-type *FILE:
+  @if {{type_built}}; then \
+    echo ">"{{FILE}}".py:"; \
+    echo "---------"; \
+    cat pylang/tests/{{FILE}}.py; \
+    echo "---------\n"; \
+    echo "> end state:"; \
+    ./out/typecheck{{os_ext}} pylang/tests/{{FILE}}.json; \
+  else \
+    echo "> type evaluation not built, run 'just build-concrete'"; \
   fi
 
 run-concrete-all:

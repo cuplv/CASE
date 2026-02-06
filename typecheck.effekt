@@ -11,157 +11,219 @@ import json
 import map
 import scanner
 
-def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
+type Type {
+  TInt()
+  TBool()
+  TStr()
+  TUnit()
+  TError()
+}
+
+def println(t: Type) = t match {
+  case TInt() => println("TInt")
+  case TBool() => println("TBool")
+  case TStr() => println("TStr")
+  case TUnit() => println("TUnit")
+  case TError() => println("TError")
+}
+
+def println(ts: List[Type]) = {
+  println("{")
+  ts.foreach { t => println(t) }
+  println("}")
+}
+
+def mergeStates(st1: State[List[Type]], st2: State[List[Type]]): State[List[Type]] = {
+  val m1 = st1 match { case St(a) => a }
+  val m2 = st2 match { case St(a) => a }
+  var merged = m1
+  map::foreach(m2) { (k, v) =>
+    val existing = map::get[String, List[Type]](merged, k) match {
+      case Some(types) => types
+      case None() => []
+    }
+    merged = merged.put(k, existing.append(v))
+  }
+  St(merged)
+}
+
+def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = {
   try {
-    with eval_forwards[Val]
+    with eval_forwards[List[Type]]
     eval((prog, init))
   }
 
-  with cstI[Val, State[Val]] {(st, v) => 
-    resume((v, st))
-  }
-
-  with varI[Val] { (st, x) =>
-    val m: Map[String, Val] = st match {case St(a) => a}
-    val v = map::get[String,Val](m, x) match {
-      case Some(i) => i
-      case None() => U()
+  with cstI[List[Type], State[List[Type]]] {(st, v) => 
+    val ts = v match {
+      case I(_) => [TInt()]
+      case B(_) => [TBool()]
+      case Str(_) => [TStr()]
+      case U() => [TUnit()]
     }
-    resume((v, st))
+    resume((ts, st))
   }
 
-  with asgnI[Val] { (st, x, v) =>
+  with varI[List[Type]] { (st, x) =>
+    val m: Map[String, List[Type]] = st match {case St(a) => a}
+    val ts = map::get[String, List[Type]](m, x) match {
+      case Some(types) => types
+      case None() => [TError()]
+    }
+    resume((ts, st))
+  }
+
+  with asgnI[List[Type]] { (st, x, ts) =>
     val m = st match {case St(a) => a}
-    val newState = m.put(x, v)
-    resume((U(), St(newState)))
+    val newState = m.put(x, ts)
+    resume(([TUnit()], St(newState)))
   }
 
-  with plusI[Val] { (st, d1, d2) =>
-    (d1, d2) match {
-      case (I(i1), I(i2)) => resume((I(i1 + i2), st))
-      case (Str(i1), Str(i2)) => resume((Str(i1 ++ i2), st))
-      case _ => resume((U(), st))
-    }
-  }
-
-  with minusI[Val] { (st, d1, d2) =>
-    (d1, d2) match {
-      case (I(i1), I(i2)) => resume((I(i1 - i2), st))
-      case _ => resume((U(), st))
-    }
-  }
-
-  with notI[Val] { (st, d) =>
-    d match {
-      case B(true) => resume((B(false), st))
-      case B(false) => resume((B(true), st))
-      case _ => resume((U(), st))
-    }
-  }
-
-  with eqI[Val] {
-    def eqI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 == i2), st))
-        case (B(b1), B(b2)) => resume((B(b1 == b2), st))
-        case (Str(s1), Str(s2)) => resume((B(s1 == s2), st))
-        case _ => resume((B(false), st))
+  with plusI[List[Type]] { (st, ts1, ts2) =>
+    val result = ts1.flatMap { t1 =>
+      ts2.map { t2 =>
+        (t1, t2) match {
+          case (TInt(), TInt()) => TInt()
+          case (TStr(), TStr()) => TStr()
+          case _ => TError()
+        }
       }
-  }
-
-  with ltI[Val] {
-    def ltI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 < i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
-  }
-  with gtI[Val] {
-    def gtI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 > i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
-  }
-  with leI[Val] {
-    def leI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 <= i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
-  }
-  with geI[Val] {
-    def geI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 >= i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
-  }
-
-  with ifI[Val] {(stT, stF, g, t, f) =>
-    g match {
-      case B(true) => resume((t, stT))
-      case B(false) => resume((f, stF))
-      case _ => resume((U(), stF))
     }
+    resume((result, st))
   }
 
-  with whileI[Val] {(stG, stB, g, b) =>
-    g match {
-      case B(true) => resume((g, stB))
-      case B(false) => resume((g, stG))
-      case _ => resume((U(), stG))
+  with minusI[List[Type]] { (st, ts1, ts2) =>
+    val result = ts1.flatMap { t1 =>
+      ts2.map { t2 =>
+        (t1, t2) match {
+          case (TInt(), TInt()) => TInt()
+          case _ => TError()
+        }
+      }
     }
+    resume((result, st))
   }
 
-  with recurse[Val] {(v) =>
-    v match {
-      case B(true) => resume(true)
-      case _ => resume(false)
+  with notI[List[Type]] { (st, ts) =>
+    val result = ts.map { t =>
+      t match {
+        case TBool() => TBool()
+        case _ => TError()
+      }
     }
+    resume((result, st))
   }
 
-  with seqI[Val] {(_, st2, _, v2) => resume((v2, st2))}
-
-  with skipI[Val] {(st) => resume((U(), st))}
-}
-
-namespace test {
-  def main() = {
-    with on[WrongFormat].panic
-    with on[IOError].panic
-    val init: Map[String, Val] = map::empty(box compareStringBytes)
-
-    // parse files to evaluate
-    val file: List[String] = args::commandLineArgs()
-    file match {
-      case Cons(_, _) => {
-        // for each file passed in
-        file.foreach{ (f) =>
-          // read json ast
-          val jsonFile: String = filesystem::readFile(f)
-          feed(jsonFile) {
-            with scanner[Char]
-            // decode into effekt
-            val (_, jsonVal) = build { decodeJson() }
-            // parse to Prog
-            val parsed = pythonAstToProg(jsonVal)
-            // evaluate
-            val (_, s) = run(parsed, St(init))
-            // extract end state
-            val m = s match {case St(a) => a}
-            // print output
-            println("---------")
-            m.foreach { (k,v) => println(k); println(v)}
-            println("---------")
+  with eqI[List[Type]] {
+    def eqI(st, ts1, ts2) = {
+      val result = ts1.flatMap { t1 =>
+        ts2.map { t2 =>
+          (t1, t2) match {
+            case (TInt(), TInt()) => TBool()
+            case (TBool(), TBool()) => TBool()
+            case (TStr(), TStr()) => TBool()
+            case _ => TBool()
           }
         }
       }
-      case Nil() => println("no file passed in")
+      resume((result, st))
     }
+  }
+
+  with ltI[List[Type]] {
+    def ltI(st, ts1, ts2) = {
+      val result = ts1.flatMap { t1 =>
+        ts2.map { t2 =>
+          TBool()
+        }
+      }
+      resume((result, st))
+    }
+  }
+  with gtI[List[Type]] {
+    def gtI(st, ts1, ts2) = {
+      val result = ts1.flatMap { t1 =>
+        ts2.map { t2 =>
+          TBool()
+        }
+      }
+      resume((result, st))
+    }
+  }
+  with leI[List[Type]] {
+    def leI(st, ts1, ts2) = {
+      val result = ts1.flatMap { t1 =>
+        ts2.map { t2 =>
+          TBool()
+        }
+      }
+      resume((result, st))
+    }
+  }
+  with geI[List[Type]] {
+    def geI(st, ts1, ts2) = {
+      val result = ts1.flatMap { t1 =>
+        ts2.map { t2 =>
+          TBool()
+        }
+      }
+      resume((result, st))
+    }
+  }
+
+  with ifI[List[Type]] {(stT, stF, ts, tsT, tsF) =>
+    val result = tsT.append(tsF)
+    val merged = mergeStates(stT, stF)
+    resume((result, merged))
+  }
+
+  with whileI[List[Type]] {(stG, stB, ts, tsB) =>
+    val merged = mergeStates(stG, stB)
+    resume(([TUnit()], merged))
+  }
+
+  with recurse[List[Type]] {(ts) =>
+    val shouldRecurse = ts.any { t => t match {
+      case TBool() => true
+      case _ => false
+    }}
+    resume(shouldRecurse)
+  }
+
+  with seqI[List[Type]] {(_, st2, _, ts2) => resume((ts2, st2))}
+
+  with skipI[List[Type]] {(st) => resume(([TUnit()], st))}
+}
+
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val init: Map[String, List[Type]] = map::empty(box compareStringBytes)
+
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        // read json ast
+        val jsonFile: String = filesystem::readFile(f)
+        feed(jsonFile) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          // evaluate
+          val (_, s) = run(parsed, St(init))
+          // extract end state
+          val m = s match {case St(a) => a}
+          // print output
+          println("---------")
+          m.foreach { (k,v) => println(k); println(v)}
+          println("---------")
+        }
+      }
+    }
+    case Nil() => println("no file passed in")
   }
 }
