@@ -36,10 +36,13 @@ arg := if backend == "js" {
 help:
   @echo 'init             := install `effekt` language'
   @echo 'build-json       := build json ast of python test files'
-  @echo 'run-concrete     := run concrete evaluation on given json file'
-  @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
   @echo 'build-concrete   := build concrete evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
+  @echo 'build-type       := build typecheck evaluator, change backend with'
+  @echo '                  backend=js|llvm|chez'
+  @echo 'run-concrete     := run concrete evaluation on given json file'
+  @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
+  @echo 'run-type         := run type evaluation on given json file'
   @echo 'parser-test-all  := run parser on JSON ast test files'
   @echo 'parser-test      := run parser on input'
 
