@@ -19,18 +19,16 @@ type Type {
   TError()
 }
 
-def println(t: Type) = t match {
-  case TInt() => println("TInt")
-  case TBool() => println("TBool")
-  case TStr() => println("TStr")
-  case TUnit() => println("TUnit")
-  case TError() => println("TError")
+def toStr(t: Type) = t match {
+  case TInt() => "TInt"
+  case TBool() => "TBool"
+  case TStr() => "TStr"
+  case TUnit() => "TUnit"
+  case TError() => "TError"
 }
 
 def println(ts: List[Type]) = {
-  println("{")
-  ts.foreach { t => println(t) }
-  println("}")
+  ts.foreach { t => println("  " ++ toStr(t)) }
 }
 
 def typeEquals(t1: Type, t2: Type): Bool = {
@@ -275,7 +273,7 @@ def main() = {
           val m = s match {case St(a) => a}
           // print output
           println("---------")
-          m.foreach { (k,v) => println(k); println(v)}
+          m.foreach { (k,v) => println(k ++ " : {"); println(v); println("}")}
           println("---------")
         }
       }
