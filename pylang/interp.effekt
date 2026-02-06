@@ -92,3 +92,114 @@ def eval[D](prog: (Prog, State[D])): (D, State[D]) /
     }
   }
 
+def eval_forwards[D]
+  { prog: => (D, State[D]) / {Elimination[D]} } : (D, State[D]) /
+  {
+    cstI[D, State[D]],
+    varI[D],
+    asgnI[D],
+    plusI[D],
+    minusI[D],
+    notI[D],
+    eqI[D],
+    ltI[D],
+    gtI[D],
+    leI[D],
+    geI[D],
+    ifI[D],
+    whileI[D],
+    recurse[D],
+    seqI[D],
+    skipI[D]
+  } =
+{
+  try {
+    prog()
+  }
+  with Elimination[D] {
+    def cstE(st, v) = {
+      do cstI(st, v)
+    }
+    def varE(st, x) = {
+      do varI(st, x)
+    }
+
+    def asgnE(st, x, vExpr) = {
+      val (vRes, st1) = resume((E(vExpr), st))
+      do asgnI(st1, x, vRes)
+    }
+
+    def plusE(st, e1, e2) = {
+      val (v1, st1) = resume((E(e1), st))
+      val (v2, st2) = resume((E(e2), st1))
+      do plusI(st2, v1, v2)
+    }
+
+    def minusE(st, e1, e2) = {
+      val (v1, st1) = resume((E(e1), st))
+      val (v2, st2) = resume((E(e2), st1))
+      do minusI(st2, v1, v2)
+    }
+
+    def notE(st, e) = {
+      val (v, st1) = resume((E(e), st))
+      do notI(st1, v)
+    }
+
+    def eqE(st, e1, e2) = {
+      val (v1, st1) = resume((E(e1), st))
+      val (v2, st2) = resume((E(e2), st1))
+      do eqI(st2, v1, v2)
+    }
+
+    def ltE(st, e1, e2) = {
+      val (v1, st1) = resume((E(e1), st))
+      val (v2, st2) = resume((E(e2), st1))
+      do ltI(st2, v1, v2)
+    }
+
+    def gtE(st, e1, e2) = {
+      val (v1, st1) = resume((E(e1), st))
+      val (v2, st2) = resume((E(e2), st1))
+      do gtI(st2, v1, v2)
+    }
+
+    def leE(st, e1, e2) = {
+      val (v1, st1) = resume((E(e1), st))
+      val (v2, st2) = resume((E(e2), st1))
+      do leI(st2, v1, v2)
+    }
+
+    def geE(st, e1, e2) = {
+      val (v1, st1) = resume((E(e1), st))
+      val (v2, st2) = resume((E(e2), st1))
+      do geI(st2, v1, v2)
+    }
+
+    def ifE(st, guardExpr, thenStmt, elseStmt) = {
+      val (guardVal, st1) = resume((E(guardExpr), st))
+      val (thenRes, st2) = resume((S(thenStmt), st1)) // cont
+      val (elseRes, st3) = resume((S(elseStmt), st1)) // cont
+      do ifI(st2, st3, guardVal, thenRes, elseRes)
+    }
+
+    def whileE(st, guardExpr, bodyStmt) = {
+      val (guardVal, st1) = resume((E(guardExpr), st))
+      val (bodyVal, st2) = resume((S(bodyStmt), st1))
+      val (wV, wS) = do whileI(st1, st2, guardVal, bodyVal)
+      do recurse(wV) match { // *does this break cumulativity...
+        case true => resume((S(While(guardExpr, bodyStmt)), wS))
+        case _ => resume((E(Cst(U())), st1))
+      }
+    }
+
+    def seqE(st, s1, s2) = {
+      val (v1, st1) = resume((S(s1), st))
+      val (v2, st2) = resume((S(s2), st1))
+      do seqI(st1, st2, v1, v2)
+    }
+    def skipE(st) = {
+      do skipI(st)
+    }
+  }
+}
