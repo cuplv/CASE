@@ -58,6 +58,14 @@ build-concrete:
     echo "> effekt not installed, run 'just init'"; \
   fi
 
+build-type:
+  @if {{installed}}; then \
+    echo "> building 'typecheck.effekt'..."; \
+    {{effekt}} -b --backend={{arg}} typecheck.effekt; \
+  else \
+    echo "> effekt not installed, run 'just init'"; \
+  fi
+
 run-concrete *FILE:
   @if {{conc_built}}; then \
     echo ">"{{FILE}}".py:"; \
