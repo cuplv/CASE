@@ -193,6 +193,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
       resume((dedupTypes(result), st))
     }
   }
+
   with gtI[List[Type]] {
     (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
@@ -203,6 +204,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
       resume((dedupTypes(result), st))
     }
   }
+
   with leI[List[Type]] {
     (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
@@ -213,6 +215,7 @@ def run(prog: Prog, init: State[List[Type]]): (List[Type], State[List[Type]]) = 
       resume((dedupTypes(result), st))
     }
   }
+
   with geI[List[Type]] {
     (st, ts1, ts2) => {
       val result = ts1.flatMap { t1 =>
