@@ -70,6 +70,7 @@ def replaceExpr(e:Expr, ident : String, value: Expr): Expr = {
 }
  
 def replace(e:SymStore, ident: String, value: Expr): SymStore = {
+    println("Replacing " ++ ident ++ " with " ++ toString(value) ++ " in " ++ toString(e))
     e match{
         case SymCst(exp) => SymCst(replaceExpr(exp, ident, value))
         case SymVar(x) and x == ident => println("Replacing" ++ x);SymCst(value)
@@ -130,7 +131,7 @@ def markStore(s:SymStore, vars: Set[String]):SymStore = {
 
 // --------------------------------------------
 // Elimination handlers for the symbolic domain
-/*
+
 def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]} : (SymStore, SymStore)/{
     cstI[SymStore, SymStore],
     varI[SymStore, SymStore],
@@ -210,17 +211,19 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             (SymCst(Cst(U())), marked)
         }
         def seqE(st, s1, s2) = {
+            println("Entered seq elim");
             val (_, st1) = resume((S(s2), st));
             println("State after s2: ");
             println(st1);
-            resume((S(s1), st1))
+            val (v2, st2) = resume((S(s1), st1))
+            (v2, st2)
         }
         def skipE(st) = {
             (SymCst(Cst(U())), st)
         }
     }
 }
-*/
+
 // ---------------------------------------------
 // Introduction handlers for the symbolic domain
 
@@ -234,7 +237,7 @@ def symbolicCstI {prog: => (SymStore, SymStore)/cstI[SymStore, SymStore]}: (SymS
 def symbolicVarI {prog: => (SymStore, SymStore)/varI[SymStore, SymStore]}: (SymStore, SymStore) = {
     try prog()
     with varI[SymStore, SymStore] {(st, x) =>
-      println("Var: " ++ x)
+      println("Enetered varI for: " ++ x)
         (SymVar(x), st)
     }
 }
@@ -251,83 +254,24 @@ def symbolicAsgnI {prog: => (SymStore, SymStore)/asgnI[SymStore, SymStore]}: (Sy
 }
 
 def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
-        with symbolicCstI()
-        with symbolicVarI()
-        with symbolicAsgnI()
-        try eval((prog, init)) 
-        with Elimination[SymStore, SymStore]{
-            def cstE(st, v) = {
-                do cstI(st, v)
-            }
-            def varE(st, x) = {
-                println("Entered var elim")
-                do varI(st, x)
-            }
-            def plusE(st, e1, e2) = {
-                (SymCst(Plus(e1, e2)), st)
-            }
-            def minusE(st, e1, e2) = {
-                (SymCst(Minus(e1, e2)), st)
-            }
-            def notE(st, e) = {
-                (SymCst(Not(e)), st)
-            }
-            def eqE(st, e1, e2) = {
-                val (v1, _) = resume((E(e1), st))
-                val (v2, _) = resume((E(e2), st))
-                (EQ(v1, v2), st)
-            }
-            def ltE(st, e1, e2) = {
-                val (v1, _) = resume((E(e1), st))
-                val (v2, _) = resume((E(e2), st))
-                (LT(v1, v2), st)
-            }
-            def gtE(st, e1, e2) = {
-                val (v1, _) = resume((E(e1), st))
-                val (v2, _) = resume((E(e2), st))
-                (GT(v1, v2), st)
-            }
-            def leE(st, e1, e2) = {
-                val (v1, _) = resume((E(e1), st))
-                val (v2, _) = resume((E(e2), st))
-                (LE(v1, v2), st)
-            }
-            def geE(st, e1, e2) = {
-                val (v1, _) = resume((E(e1), st))
-                val (v2, _) = resume((E(e2), st))
-                (GE(v1, v2), st)
-            }
-            def asgnE(st, x, v) = {
-                println("Entered asgn elim for " ++ x)
-                do asgnI(st, x, SymCst(v))
-            }
-            def ifE(st, g, t, f) = {
-                val (gv, _) = resume((E(g), st))
-                val (fv, fs) = resume((S(f), st))
-                val (tv, ts) = resume((S(t), st))
-                (SymCst(Cst(U())), OR(AND(fs, NOT(gv)), AND(ts, gv)))
-            }
-            def whileE(st, g, b) = {
-                //find everything modified in body
-                val modified:Set[String] = findModified(b, set::emptyGeneric())
-                // mark it as unkown
-                val marked = markStore(st, modified)
-                //return new store
-                (SymCst(Cst(U())), marked)
-            }
-            def seqE(st, s1, s2) = {
-                println("Entered seq elim")
-                val (_, st1) = resume((S(s2), st))
-                println("State after s2: ");
-                println(st1);
-                resume((S(s1), st1))
-            }
-            def skipE(st) = {
-                (SymCst(Cst(U())), st)
-            }
+        try {
+            with symbolicElim()
+            eval((prog, init))
         }
-        
-    
+        with cstI[SymStore, SymStore] {(st, v) =>
+            (SymCst(Cst(v)), st)
+        }
+        with varI[SymStore, SymStore] {(st, x) =>
+            println("Enetered varI for: " ++ x)
+                (SymVar(x), st)
+        }
+        with asgnI[SymStore, SymStore] {(st, x, v) =>
+            println("Entered asgnI for " ++ x)
+            v match {
+                case SymCst(v) => (SymCst(Cst(U())), replace(st, x, v))
+                case _  => (SymCst(Cst(U())), st)
+            }        
+        }
 }
 
 def main() = {
