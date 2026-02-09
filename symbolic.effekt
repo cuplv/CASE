@@ -154,7 +154,7 @@ def markStore(s:SymStore, vars: Set[String]):SymStore = {
 
 // --------------------------------------------
 // Elimination handlers for the symbolic domain
-
+/*
 def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]} : (SymStore, SymStore)/{
     cstI[SymStore, SymStore],
     varI[SymStore, SymStore],
@@ -234,7 +234,7 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             (SymCst(Cst(U())), marked)
         }
         def seqE(st, s1, s2) = {
-            val (_, st1) = resume((S(s2), st))
+            val (_, st1) = resume((S(s2), st));
             println("State after s2: ");
             println(st1);
             resume((S(s1), st1))
@@ -244,7 +244,7 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
         }
     }
 }
-
+*/
 // ---------------------------------------------
 // Introduction handlers for the symbolic domain
 
