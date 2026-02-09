@@ -33,48 +33,24 @@ type SymStore{
 
 // symbolic library functions:
 
+def toString(s: SymStore): String = {
+    s match {
+        case SymCst(exp) => "SymCst(" ++ toString(exp) ++ ")"
+        case SymVar(x) => "SymVar(\"" ++ x ++ "\")"
+        case NOT(e1) => "NOT(" ++ toString(e1) ++ ")"
+        case AND(e1, e2) => "AND(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+        case OR(e1, e2) => "OR(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+        case EQ(e1, e2) => "EQ(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+        case LT(e1, e2) => "LT(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+        case GT(e1, e2) => "GT(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+        case LE(e1, e2) => "LE(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+        case GE(e1, e2) => "GE(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+    }
+}
 
 def println(s: SymStore):Unit = {
-    s match {
-        case SymCst(exp) => println("SymCst: "); println(exp)
-        case SymVar(x) => println("SymVar: "); println(x)
-        case NOT(e1) => println("NOT: "); println(e1)
-        case AND(e1, e2) => {
-            println("AND: ")
-            println(e1)
-            println(e2)
-        }
-        case OR(e1, e2) => {
-            println("OR: ")
-            println(e1)
-            println(e2)
-        }
-        case EQ(e1, e2) => {
-            println("EQ: ")
-            println(e1)
-            println(e2)
-        }
-        case LT(e1, e2) => {
-            println("LT: ")
-            println(e1)
-            println(e2)
-        }
-        case GT(e1, e2) => {
-            println("GT: ")
-            println(e1)
-            println(e2)
-        }
-        case LE(e1, e2) => {
-            println("LE: ")
-            println(e1)
-            println(e2)
-        }
-        case GE(e1, e2) => {
-            println("GE: ")
-            println(e1)
-            println(e2)
-        }
-    }
+    val str = toString(s)
+    println(str)
 }
 
 def replaceExpr(e:Expr, ident : String, value: Expr): Expr = {
