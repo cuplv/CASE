@@ -36,6 +36,52 @@ type Expr {
   Ge(e1: Expr, e2: Expr)
 }
 
+def println(e: Expr):Unit = {
+  e match {
+    case Cst(v) => println(v)
+    case Var(x) => println("Var(\"" ++ x ++ "\")")
+    case Plus(e1, e2) => {
+      println(e1)
+      println(e2)
+      println("Plus")
+    }
+    case Minus(e1, e2) => {
+      println(e1)
+      println(e2)
+      println("Minus")
+    }
+    case Not(e) => {
+      println(e)
+      println("Not")
+    }
+    case Eq(e1, e2) => {
+      println(e1)
+      println(e2)
+      println("Eq")
+    }
+    case Lt(e1, e2) => {
+      println(e1)
+      println(e2)
+      println("Lt")
+    }
+    case Gt(e1, e2) => {
+      println(e1)
+      println(e2)
+      println("Gt")
+    }
+    case Le(e1, e2) => {
+      println(e1)
+      println(e2)
+      println("Le")
+    }
+    case Ge(e1, e2) => {
+      println(e1)
+      println(e2)
+      println("Ge")
+    }
+  }
+}
+
 type Stmt {
   Skip()
   Asgn(x: String, v: Expr)
