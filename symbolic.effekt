@@ -33,23 +33,24 @@ type SymStore{
 
 // symbolic library functions:
 
-def toString(s: SymStore): String = {
+def symToString(s: SymStore): String = {
     s match {
-        case SymCst(exp) => "SymCst(" ++ toString(exp) ++ ")"
+        case SymCst(exp) => "SymCst(" ++ syntax::toString(exp) ++ ")"
         case SymVar(x) => "SymVar(\"" ++ x ++ "\")"
-        case NOT(e1) => "NOT(" ++ toString(e1) ++ ")"
-        case AND(e1, e2) => "AND(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
-        case OR(e1, e2) => "OR(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
-        case EQ(e1, e2) => "EQ(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
-        case LT(e1, e2) => "LT(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
-        case GT(e1, e2) => "GT(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
-        case LE(e1, e2) => "LE(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
-        case GE(e1, e2) => "GE(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+        case NOT(e1) => "NOT(" ++ symToString(e1) ++ ")"
+        case AND(e1, e2) => "AND(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case OR(e1, e2) => "OR(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case EQ(e1, e2) => "EQ(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case LT(e1, e2) => "LT(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case GT(e1, e2) => "GT(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case LE(e1, e2) => "LE(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case GE(e1, e2) => "GE(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
     }
 }
 
-def println(s: SymStore):Unit = {
-    val str = toString(s)
+def printSym(s: SymStore):Unit = {
+    val str = symToString(s)
+    // use global println to avoid shadowing
     println(str)
 }
 
@@ -70,7 +71,7 @@ def replaceExpr(e:Expr, ident : String, value: Expr): Expr = {
 }
  
 def replace(e:SymStore, ident: String, value: Expr): SymStore = {
-    println("Replacing " ++ ident ++ " with " ++ toString(value) ++ " in " ++ toString(e))
+    println("Replacing " ++ ident ++ " with " ++ syntax::toString(value) ++ " in " ++ symToString(e))
     e match{
         case SymCst(exp) => SymCst(replaceExpr(exp, ident, value))
         case SymVar(x) and x == ident => println("Replacing" ++ x);SymCst(value)
@@ -129,13 +130,71 @@ def markStore(s:SymStore, vars: Set[String]):SymStore = {
     }
 }
 
+def simplifySym(s: SymStore): SymStore = {
+    s match {
+        case SymCst(_) => s
+        case SymVar(_) => s
+        case NOT(e1) => NOT(simplifySym(e1))
+        case AND(e1, e2) => AND(simplifySym(e1), simplifySym(e2))
+        case OR(e1, e2) => OR(simplifySym(e1), simplifySym(e2))
+        case EQ(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 == i2)))
+                case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => SymCst(Cst(B(b1 == b2)))
+                case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => SymCst(Cst(B(s1 == s2)))
+                case _ => EQ(l, r)
+            }
+        }
+        case LT(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 < i2)))
+                case _ => LT(l, r)
+            }
+        }
+        case GT(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 > i2)))
+                case _ => GT(l, r)
+            }
+        }
+        case LE(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 <= i2)))
+                case _ => LE(l, r)
+            }
+        }
+        case GE(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 >= i2)))
+                case _ => GE(l, r)
+            }
+        }
+    }
+}
+
 // --------------------------------------------
 // Elimination handlers for the symbolic domain
 
 def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]} : (SymStore, SymStore)/{
     cstI[SymStore, SymStore],
     varI[SymStore, SymStore],
-    asgnI[SymStore, SymStore]
+    asgnI[SymStore, SymStore],
+    
+    eqI[SymStore, SymStore],
+    ltI[SymStore, SymStore],
+    gtI[SymStore, SymStore],
+    leI[SymStore, SymStore],
+    geI[SymStore, SymStore]
     // plusI[SymStore, SymStore],
     // minusI[SymStore, SymStore],
     // notI[SymStore, SymStore],
@@ -170,27 +229,27 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
         def eqE(st, e1, e2) = {
             val (v1, _) = resume((E(e1), st))
             val (v2, _) = resume((E(e2), st))
-            (EQ(v1, v2), st)
+            do eqI(st, v1, v2)
         }
         def ltE(st, e1, e2) = {
             val (v1, _) = resume((E(e1), st))
             val (v2, _) = resume((E(e2), st))
-            (LT(v1, v2), st)
+            do ltI(st, v1, v2)
         }
         def gtE(st, e1, e2) = {
             val (v1, _) = resume((E(e1), st))
             val (v2, _) = resume((E(e2), st))
-            (GT(v1, v2), st)
+            do gtI(st, v1, v2)
         }
         def leE(st, e1, e2) = {
             val (v1, _) = resume((E(e1), st))
             val (v2, _) = resume((E(e2), st))
-            (LE(v1, v2), st)
+            do leI(st, v1, v2)
         }
         def geE(st, e1, e2) = {
             val (v1, _) = resume((E(e1), st))
             val (v2, _) = resume((E(e2), st))
-            (GE(v1, v2), st)
+            do geI(st, v1, v2)
         }
         def asgnE(st, x, v) = {
             println("Entered asgn elim for " ++ x)
@@ -211,11 +270,15 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             (SymCst(Cst(U())), marked)
         }
         def seqE(st, s1, s2) = {
-            println("Entered seq elim");
+            println(">=entered seq elim=<");
+            println("> seq statements: s1=" ++ syntax::toString(s1) ++ ", s2=" ++ syntax::toString(s2))
             val (_, st1) = resume((S(s2), st));
-            println("State after s2: ");
-            println(st1);
+            println(">==state after s2==<");
+            printSym(st1);
+            println(">==resuming s1==<" ++ syntax::toString(s1));
             val (v2, st2) = resume((S(s1), st1))
+            println(">==state after s1==<");
+            printSym(st2);
             (v2, st2)
         }
         def skipE(st) = {
@@ -259,18 +322,50 @@ def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
             eval((prog, init))
         }
         with cstI[SymStore, SymStore] {(st, v) =>
-            (SymCst(Cst(v)), st)
+            resume((SymCst(Cst(v)), st))
         }
         with varI[SymStore, SymStore] {(st, x) =>
             println("Enetered varI for: " ++ x)
-                (SymVar(x), st)
+                resume((SymVar(x), st))
         }
         with asgnI[SymStore, SymStore] {(st, x, v) =>
             println("Entered asgnI for " ++ x)
             v match {
-                case SymCst(v) => (SymCst(Cst(U())), replace(st, x, v))
-                case _  => (SymCst(Cst(U())), st)
+                case SymCst(v) => resume((SymCst(Cst(U())), replace(st, x, v)))
+                case _  => resume((SymCst(Cst(U())), st))
             }        
+        }
+        with eqI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 == i2))), st))
+                case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => resume((SymCst(Cst(B(b1 == b2))), st))
+                case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
+                case _ => resume((EQ(d1, d2), st))
+            }
+        }
+        with ltI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
+        }
+        with gtI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 > i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
+        }
+        with leI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 <= i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
+        }
+        with geI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 >= i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
         }
 }
 
@@ -299,8 +394,8 @@ def main() = {
           
           // print output
           println("---------")
-          println(s)
-          println(v)
+          printSym(s)
+          printSym(v)
           println("---------")
         }
       }
