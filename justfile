@@ -38,6 +38,7 @@ arg := if backend == "js" {
 
 help:
   @echo 'init             := install `effekt` language'
+  @echo 'clean            := remove build/output artifacts'
   @echo 'build-json       := build json ast of python test files'
   @echo 'build-concrete   := build concrete evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
@@ -131,4 +132,9 @@ parser-test-all:
 
 parser-test:
   @python3 pylang/tests/astDump.py -i | ./out/pyconv{{os_ext}} -i 
+
+clean:
+  @rm -rf out
+  @rm -f concrete_output.txt
+  @rm -f pylang/tests/*.json
 
