@@ -168,3 +168,6 @@ code/typeclass_cps_based/.lake
 *.synctex.gz
 
 *.aux
+
+smt_output.txt
+concrete_output.txt
