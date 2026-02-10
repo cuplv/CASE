@@ -13,6 +13,9 @@ conc_built := path_exists("./out/concrete"+os_ext)
 # is type eval built
 type_built := path_exists("./out/typecheck"+os_ext)
 
+# is symbolic eval built
+sym_built := path_exists("./out/symbolic"+os_ext)
+
 # file to run
 file := ""
 
@@ -40,9 +43,12 @@ help:
   @echo '                  backend=js|llvm|chez'
   @echo 'build-type       := build typecheck evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
+  @echo 'build-sym        := build symbolic evaluator, change backend with'
+  @echo '                  backend=js|llvm|chez'
   @echo 'run-concrete     := run concrete evaluation on given json file'
   @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
   @echo 'run-type         := run type evaluation on given json file'
+  @echo 'run-sym          := run symbolic evaluation on given json file'
   @echo 'parser-test-all  := run parser on JSON ast test files'
   @echo 'parser-test      := run parser on input'
 
@@ -69,6 +75,14 @@ build-type:
     echo "> effekt not installed, run 'just init'"; \
   fi
 
+build-sym:
+  @if {{installed}}; then \
+    echo "> building 'symbolic.effekt'..."; \
+    {{effekt}} -b --backend={{arg}} symbolic.effekt; \
+  else \
+    echo "> effekt not installed, run 'just init'"; \
+  fi
+
 run-concrete *FILE:
   @if {{conc_built}}; then \
     echo ">"{{FILE}}".py:"; \
@@ -91,6 +105,18 @@ run-type *FILE:
     ./out/typecheck{{os_ext}} pylang/tests/{{FILE}}.json; \
   else \
     echo "> type evaluation not built, run 'just build-type'"; \
+  fi
+
+run-sym *FILE:
+  @if {{sym_built}}; then \
+    echo ">"{{FILE}}".py:"; \
+    echo "---------"; \
+    cat pylang/tests/{{FILE}}.py; \
+    echo "---------\n"; \
+    echo "> end state:"; \
+    ./out/symbolic{{os_ext}} pylang/tests/{{FILE}}.json; \
+  else \
+    echo "> symbolic evaluation not built, run 'just build-sym'"; \
   fi
 
 run-concrete-all:
