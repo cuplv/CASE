@@ -71,10 +71,10 @@ def replaceExpr(e:Expr, ident : String, value: Expr): Expr = {
 }
  
 def replace(e:SymStore, ident: String, value: Expr): SymStore = {
-    println("Replacing " ++ ident ++ " with " ++ syntax::toString(value) ++ " in " ++ symToString(e))
+    // println("Replacing " ++ ident ++ " with " ++ syntax::toString(value) ++ " in " ++ symToString(e))
     e match{
         case SymCst(exp) => SymCst(replaceExpr(exp, ident, value))
-        case SymVar(x) and x == ident => println("Replacing" ++ x);SymCst(value)
+        case SymVar(x) and x == ident => SymCst(value)
         case SymVar(_) => e
         case NOT(e1) => NOT(replace(e1, ident, value))
         case AND(e1, e2) => AND(replace(e1, ident, value), replace(e2, ident, value))
@@ -198,11 +198,6 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
     // plusI[SymStore, SymStore],
     // minusI[SymStore, SymStore],
     // notI[SymStore, SymStore],
-    // eqI[SymStore, SymStore],
-    // ltI[SymStore, SymStore],
-    // gtI[SymStore, SymStore],
-    // leI[SymStore, SymStore],
-    // geI[SymStore, SymStore],
     // ifI[SymStore, SymStore],
     // whileI[SymStore, SymStore],
     // seqI[SymStore, SymStore],
@@ -214,7 +209,7 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             do cstI(st, v)
         }
         def varE(st, x) = {
-            println("Entered var elim")
+            // println("Entered var elim")
             do varI(st, x)
         }
         def plusE(st, e1, e2) = {
@@ -252,7 +247,7 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             do geI(st, v1, v2)
         }
         def asgnE(st, x, v) = {
-            println("Entered asgn elim for " ++ x)
+            // println("Entered asgn elim for " ++ x)
             do asgnI(st, x, SymCst(v))
         }
         def ifE(st, g, t, f) = {
@@ -270,14 +265,14 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             (SymCst(Cst(U())), marked)
         }
         def seqE(st, s1, s2) = {
-            println(">=entered seq elim=<");
-            println("> seq statements: s1=" ++ syntax::toString(s1) ++ ", s2=" ++ syntax::toString(s2))
+            // println(">=entered seq elim=<");
+            // println("> seq statements: s1=" ++ syntax::toString(s1) ++ ", s2=" ++ syntax::toString(s2))
             val (_, st1) = resume((S(s2), st));
-            println(">==state after s2==<");
+            // println(">==state after s2==<");
             printSym(st1);
-            println(">==resuming s1==<" ++ syntax::toString(s1));
+            // println(">==resuming s1==<" ++ syntax::toString(s1));
             val (v2, st2) = resume((S(s1), st1))
-            println(">==state after s1==<");
+            // println(">==state after s1==<");
             printSym(st2);
             (v2, st2)
         }
@@ -289,33 +284,75 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
 
 // ---------------------------------------------
 // Introduction handlers for the symbolic domain
-
+/*
 def symbolicCstI {prog: => (SymStore, SymStore)/cstI[SymStore, SymStore]}: (SymStore, SymStore) = {
     try prog()
     with cstI[SymStore, SymStore] {(st, v) =>
-        (SymCst(Cst(v)), st)
+        resume((SymCst(Cst(v)), st))
     }
 }
 
 def symbolicVarI {prog: => (SymStore, SymStore)/varI[SymStore, SymStore]}: (SymStore, SymStore) = {
     try prog()
     with varI[SymStore, SymStore] {(st, x) =>
-      println("Enetered varI for: " ++ x)
-        (SymVar(x), st)
+    //   println("Entered varI for: " ++ x)
+        resume((SymVar(x), st))
     }
 }
 
 def symbolicAsgnI {prog: => (SymStore, SymStore)/asgnI[SymStore, SymStore]}: (SymStore, SymStore) = {
     try prog()
     with asgnI[SymStore, SymStore] {(st, x, v) =>
-        println("Entered asgnI for " ++ x)
+        // println("Entered asgnI for " ++ x)
         v match {
-            case SymCst(v) => (SymCst(Cst(U())), replace(st, x, v))
-            case _  => (SymCst(Cst(U())), st)
+            case SymCst(v) => resume((SymCst(Cst(U())), replace(st, x, v)))
+            case _  => resume((SymCst(Cst(U())), st))
         }        
     }
 }
 
+def symbolicEqI {prog: => (SymStore, SymStore)/eqI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with eqI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 == i2))), st))
+                case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => resume((SymCst(Cst(B(b1 == b2))), st))
+                case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
+                case _ => resume((EQ(d1, d2), st))
+            }
+        }
+}
+
+def symbolicLtI {prog: => (SymStore, SymStore)/ltI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with ltI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
+                case _ => resume((LT(d1, d2), st))
+            }
+        }
+}
+
+def symbolicGtI {prog: => (SymStore, SymStore)/gtI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with gtI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 > i2))), st))
+                case _ => resume((GT(d1, d2), st))
+            }
+        }
+}
+
+def symbolicLeI {prog: => (SymStore, SymStore)/leI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with leI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 <= i2))), st))
+                case _ => resume((LE(d1, d2), st))
+            }
+        }
+}
+*/
 def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
         try {
             with symbolicElim()
@@ -325,11 +362,11 @@ def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
             resume((SymCst(Cst(v)), st))
         }
         with varI[SymStore, SymStore] {(st, x) =>
-            println("Enetered varI for: " ++ x)
-                resume((SymVar(x), st))
+        //   println("Entered varI for: " ++ x)
+            resume((SymVar(x), st))
         }
         with asgnI[SymStore, SymStore] {(st, x, v) =>
-            println("Entered asgnI for " ++ x)
+            // println("Entered asgnI for " ++ x)
             v match {
                 case SymCst(v) => resume((SymCst(Cst(U())), replace(st, x, v)))
                 case _  => resume((SymCst(Cst(U())), st))
@@ -342,7 +379,7 @@ def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
                 case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
                 case _ => resume((EQ(d1, d2), st))
             }
-        }
+        } 
         with ltI[SymStore, SymStore] {(st, d1, d2) =>
             (d1, d2) match {
                 case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
