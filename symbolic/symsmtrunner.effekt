@@ -1,0 +1,46 @@
+import symbolic/smtlib
+import symbolic/symbolic
+
+import pylang/interp
+import pylang/pyconv
+import pylang/syntax
+
+
+import args
+import io/error
+import io/filesystem
+import json
+import map
+import scanner
+
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val init: SymStore = EQ(SymVar("x"), SymCst(Cst(I(1))))
+
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        // read json ast
+        val jsonFile: String = filesystem::readFile(f)
+        feed(jsonFile) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          // evaluate
+          val (v, s) = run(parsed, init)
+          // parse end state into smtlib
+          val smt = symStoreToSmtScript(s)
+          // print output
+          println(smt)
+        }
+      }
+    }
+    case Nil() => println("no file passed in")
+  }
+}

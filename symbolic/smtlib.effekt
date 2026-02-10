@@ -1,0 +1,203 @@
+module smtlib
+
+import symbolic/symbolic
+import pylang/syntax
+import set
+
+def symStoreToSmtLib(s: SymStore): String = {
+	symToSmt(s)
+}
+
+def symStoreToSmtScript(s: SymStore): String = {
+	val decls = declLines(freeVarsList(s))
+	val lines = appendLines(
+		Cons("(set-logic ALL)", Nil()),
+		appendLines(
+			decls,
+			Cons("(assert (not " ++ symToSmt(s) ++ "))",
+				Cons("(check-sat)", Cons("(get-model)", Nil()))
+			)
+		)
+	)
+	joinLines(lines)
+}
+
+def symToSmt(s: SymStore): String = {
+	s match {
+		case SymCst(e) => exprToSmt(e)
+		case SymVar(x) => escapeSymbol(x)
+		case NOT(e1) => "(not " ++ symToSmt(e1) ++ ")"
+		case AND(e1, e2) => "(and " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+		case OR(e1, e2) => "(or " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+		case EQ(e1, e2) => "(= " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+		case LT(e1, e2) => "(< " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+		case GT(e1, e2) => "(> " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+		case LE(e1, e2) => "(<= " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+		case GE(e1, e2) => "(>= " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+	}
+}
+
+def freeVars(s: SymStore): Set[String] = {
+	freeVarsSym(s)
+}
+
+def freeVarsSym(s: SymStore): Set[String] = {
+	s match {
+		case SymCst(e) => freeVarsExpr(e)
+		case SymVar(x) => set::emptyGeneric().insert(x)
+		case NOT(e1) => freeVarsSym(e1)
+		case AND(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+		case OR(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+		case EQ(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+		case LT(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+		case GT(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+		case LE(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+		case GE(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+	}
+}
+
+def freeVarsExpr(e: Expr): Set[String] = {
+	e match {
+		case Cst(_) => set::emptyGeneric()
+		case Var(x) => set::emptyGeneric().insert(x)
+		case Plus(e1, e2) => set::union(freeVarsExpr(e1), freeVarsExpr(e2))
+		case Minus(e1, e2) => set::union(freeVarsExpr(e1), freeVarsExpr(e2))
+		case Not(e1) => freeVarsExpr(e1)
+		case Eq(e1, e2) => set::union(freeVarsExpr(e1), freeVarsExpr(e2))
+		case Lt(e1, e2) => set::union(freeVarsExpr(e1), freeVarsExpr(e2))
+		case Gt(e1, e2) => set::union(freeVarsExpr(e1), freeVarsExpr(e2))
+		case Le(e1, e2) => set::union(freeVarsExpr(e1), freeVarsExpr(e2))
+		case Ge(e1, e2) => set::union(freeVarsExpr(e1), freeVarsExpr(e2))
+	}
+}
+
+def freeVarsList(s: SymStore): List[String] = {
+	val (vars, _) = collectSymVars(s, set::emptyGeneric(), Nil())
+	vars
+}
+
+def collectSymVars(s: SymStore, seen: Set[String], acc: List[String]): (List[String], Set[String]) = {
+	s match {
+		case SymCst(e) => collectExprVars(e, seen, acc)
+		case SymVar(x) => addUnique(x, seen, acc)
+		case NOT(e1) => collectSymVars(e1, seen, acc)
+		case AND(e1, e2) => {
+			val (a1, s1) = collectSymVars(e1, seen, acc)
+			collectSymVars(e2, s1, a1)
+		}
+		case OR(e1, e2) => {
+			val (a1, s1) = collectSymVars(e1, seen, acc)
+			collectSymVars(e2, s1, a1)
+		}
+		case EQ(e1, e2) => {
+			val (a1, s1) = collectSymVars(e1, seen, acc)
+			collectSymVars(e2, s1, a1)
+		}
+		case LT(e1, e2) => {
+			val (a1, s1) = collectSymVars(e1, seen, acc)
+			collectSymVars(e2, s1, a1)
+		}
+		case GT(e1, e2) => {
+			val (a1, s1) = collectSymVars(e1, seen, acc)
+			collectSymVars(e2, s1, a1)
+		}
+		case LE(e1, e2) => {
+			val (a1, s1) = collectSymVars(e1, seen, acc)
+			collectSymVars(e2, s1, a1)
+		}
+		case GE(e1, e2) => {
+			val (a1, s1) = collectSymVars(e1, seen, acc)
+			collectSymVars(e2, s1, a1)
+		}
+	}
+}
+
+def collectExprVars(e: Expr, seen: Set[String], acc: List[String]): (List[String], Set[String]) = {
+	e match {
+		case Cst(_) => (acc, seen)
+		case Var(x) => addUnique(x, seen, acc)
+		case Plus(e1, e2) => {
+			val (a1, s1) = collectExprVars(e1, seen, acc)
+			collectExprVars(e2, s1, a1)
+		}
+		case Minus(e1, e2) => {
+			val (a1, s1) = collectExprVars(e1, seen, acc)
+			collectExprVars(e2, s1, a1)
+		}
+		case Not(e1) => collectExprVars(e1, seen, acc)
+		case Eq(e1, e2) => {
+			val (a1, s1) = collectExprVars(e1, seen, acc)
+			collectExprVars(e2, s1, a1)
+		}
+		case Lt(e1, e2) => {
+			val (a1, s1) = collectExprVars(e1, seen, acc)
+			collectExprVars(e2, s1, a1)
+		}
+		case Gt(e1, e2) => {
+			val (a1, s1) = collectExprVars(e1, seen, acc)
+			collectExprVars(e2, s1, a1)
+		}
+		case Le(e1, e2) => {
+			val (a1, s1) = collectExprVars(e1, seen, acc)
+			collectExprVars(e2, s1, a1)
+		}
+		case Ge(e1, e2) => {
+			val (a1, s1) = collectExprVars(e1, seen, acc)
+			collectExprVars(e2, s1, a1)
+		}
+	}
+}
+
+def exprToSmt(e: Expr): String = {
+	e match {
+		case Cst(I(i)) => show(i)
+		case Cst(B(b)) => if (b) {"true"} else {"false"}
+		case Cst(Str(s)) => stringLit(s)
+		case Cst(U()) => "unit"
+		case Var(x) => escapeSymbol(x)
+		case Plus(e1, e2) => "(+ " ++ exprToSmt(e1) ++ " " ++ exprToSmt(e2) ++ ")"
+		case Minus(e1, e2) => "(- " ++ exprToSmt(e1) ++ " " ++ exprToSmt(e2) ++ ")"
+		case Not(e1) => "(not " ++ exprToSmt(e1) ++ ")"
+		case Eq(e1, e2) => "(= " ++ exprToSmt(e1) ++ " " ++ exprToSmt(e2) ++ ")"
+		case Lt(e1, e2) => "(< " ++ exprToSmt(e1) ++ " " ++ exprToSmt(e2) ++ ")"
+		case Gt(e1, e2) => "(> " ++ exprToSmt(e1) ++ " " ++ exprToSmt(e2) ++ ")"
+		case Le(e1, e2) => "(<= " ++ exprToSmt(e1) ++ " " ++ exprToSmt(e2) ++ ")"
+		case Ge(e1, e2) => "(>= " ++ exprToSmt(e1) ++ " " ++ exprToSmt(e2) ++ ")"
+	}
+}
+
+def declLines(vars: List[String]): List[String] = {
+	vars match {
+		case Nil() => Nil()
+		case Cons(x, xs) => Cons("(declare-fun " ++ escapeSymbol(x) ++ " () Int)", declLines(xs))
+	}
+}
+
+def addUnique(x: String, seen: Set[String], acc: List[String]): (List[String], Set[String]) = {
+	if (seen.contains(x))  {(acc, seen)} else {(Cons(x, acc), seen.insert(x))}
+}
+
+def appendLines(a: List[String], b: List[String]): List[String] = {
+	a match {
+		case Nil() => b
+		case Cons(x, xs) => Cons(x, appendLines(xs, b))
+	}
+}
+
+def joinLines(lines: List[String]): String = {
+	lines match {
+		case Nil() => ""
+		case Cons(x, Nil()) => x
+		case Cons(x, xs) => x ++ "\n" ++ joinLines(xs)
+	}
+}
+
+def escapeSymbol(s: String): String = {
+	// SMT-LIB symbols are usually simple identifiers; keep as-is for now.
+	s
+}
+
+def stringLit(s: String): String = {
+	// Basic string literal formatting; assumes no embedded quotes.
+	"\"" ++ s ++ "\""
+}

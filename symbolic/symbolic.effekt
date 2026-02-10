@@ -1,0 +1,442 @@
+module symbolic
+
+import pylang/interp
+import pylang/pyconv
+import pylang/syntax
+
+import set
+
+import args
+import io/error
+import io/filesystem
+import json
+import map
+import scanner
+
+type SymStore{
+    // base
+    SymCst(v : Expr)
+    SymVar(x: String)
+
+    // logic
+    NOT(e1: SymStore)
+    AND(e1: SymStore, e2: SymStore)
+    OR(e1: SymStore, e2: SymStore)
+    
+    //Comparsion
+    EQ(e1: SymStore, e2: SymStore)
+    LT(e1: SymStore, e2: SymStore)
+    GT(e1: SymStore, e2: SymStore)
+    LE(e1: SymStore, e2: SymStore)
+    GE(e1: SymStore, e2: SymStore)
+}
+
+// symbolic library functions:
+
+def symToString(s: SymStore): String = {
+    s match {
+        case SymCst(exp) => "SymCst(" ++ syntax::toString(exp) ++ ")"
+        case SymVar(x) => "SymVar(\"" ++ x ++ "\")"
+        case NOT(e1) => "NOT(" ++ symToString(e1) ++ ")"
+        case AND(e1, e2) => "AND(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case OR(e1, e2) => "OR(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case EQ(e1, e2) => "EQ(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case LT(e1, e2) => "LT(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case GT(e1, e2) => "GT(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case LE(e1, e2) => "LE(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case GE(e1, e2) => "GE(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+    }
+}
+
+def printSym(s: SymStore):Unit = {
+    val str = symToString(s)
+    // use global println to avoid shadowing
+    println(str)
+}
+
+def replaceExpr(e:Expr, ident : String, value: Expr): Expr = {
+    e match{
+        case Cst(_) => e
+        case Var(x) and x == ident => value
+        case Var(_) => e
+        case Plus(e1, e2) => Plus(replaceExpr(e1, ident, value), replaceExpr(e2, ident, value))
+        case Minus(e1, e2) => Minus(replaceExpr(e1, ident, value), replaceExpr(e2, ident, value))
+        case Not(e1) => Not(replaceExpr(e1, ident, value))
+        case Eq(e1, e2) => Eq(replaceExpr(e1, ident, value), replaceExpr(e2, ident, value))
+        case Lt(e1, e2) => Lt(replaceExpr(e1, ident, value), replaceExpr(e2, ident, value))
+        case Gt(e1, e2) => Gt(replaceExpr(e1, ident, value), replaceExpr(e2, ident, value))
+        case Le(e1, e2) => Le(replaceExpr(e1, ident, value), replaceExpr(e2, ident, value))
+        case Ge(e1, e2) => Ge(replaceExpr(e1, ident, value), replaceExpr(e2, ident, value))
+    }
+}
+ 
+def replace(e:SymStore, ident: String, value: Expr): SymStore = {
+    // println("Replacing " ++ ident ++ " with " ++ syntax::toString(value) ++ " in " ++ symToString(e))
+    e match{
+        case SymCst(exp) => SymCst(replaceExpr(exp, ident, value))
+        case SymVar(x) and x == ident => SymCst(value)
+        case SymVar(_) => e
+        case NOT(e1) => NOT(replace(e1, ident, value))
+        case AND(e1, e2) => AND(replace(e1, ident, value), replace(e2, ident, value))
+        case OR(e1, e2) => OR(replace(e1, ident, value), replace(e2, ident, value))
+        case EQ(e1, e2) => EQ(replace(e1, ident, value), replace(e2, ident, value))
+        case LT(e1, e2) => LT(replace(e1, ident, value), replace(e2, ident, value))
+        case GT(e1, e2) => GT(replace(e1, ident, value), replace(e2, ident, value))
+        case LE(e1, e2) => LE(replace(e1, ident, value), replace(e2, ident, value))
+        case GE(e1, e2) => GE(replace(e1, ident, value), replace(e2, ident, value))
+    }
+
+}
+
+def findModified(s:Stmt, acc:Set[String]):Set[String] = {
+    s match{
+        case Asgn(x, v) => acc.insert(x)
+        case While(g, b) => findModified(b, acc)
+        case Seq(s1, s2) => findModified(s1, findModified(s2, acc))
+        case If(g, t, f) => findModified(t, findModified(f, acc))
+        case Skip() => acc
+    }
+}
+
+def markExpr(e:Expr, vars: Set[String]):Expr = {
+    e match {
+        case Cst(_) => e
+        case Var(x) and vars.contains(x) => Var("$" ++ x)
+        case Var(_) => e
+        case Plus(e1, e2) => Plus(markExpr(e1, vars), markExpr(e2, vars))
+        case Minus(e1, e2) => Minus(markExpr(e1, vars), markExpr(e2, vars))
+        case Not(e1) => Not(markExpr(e1, vars))
+        case Eq(e1, e2) => Eq(markExpr(e1, vars), markExpr(e2, vars))
+        case Lt(e1, e2) => Lt(markExpr(e1, vars), markExpr(e2, vars))
+        case Gt(e1, e2) => Gt(markExpr(e1, vars), markExpr(e2, vars))
+        case Le(e1, e2) => Le(markExpr(e1, vars), markExpr(e2, vars))
+        case Ge(e1, e2) => Ge(markExpr(e1, vars), markExpr(e2, vars))
+    }
+}
+
+def markStore(s:SymStore, vars: Set[String]):SymStore = {
+    s match {
+        case SymCst(e) => SymCst(markExpr(e, vars))
+        case SymVar(x) and vars.contains(x) => SymVar("$" ++ x)
+        case SymVar(_) => s
+        case NOT(e1) => NOT(markStore(e1, vars))
+        case AND(e1, e2) => AND(markStore(e1, vars), markStore(e2, vars))
+        case OR(e1, e2) => OR(markStore(e1, vars), markStore(e2, vars))
+        case EQ(e1, e2) => EQ(markStore(e1, vars), markStore(e2, vars))
+        case LT(e1, e2) => LT(markStore(e1, vars), markStore(e2, vars))
+        case GT(e1, e2) => GT(markStore(e1, vars), markStore(e2, vars))
+        case LE(e1, e2) => LE(markStore(e1, vars), markStore(e2, vars))
+        case GE(e1, e2) => GE(markStore(e1, vars), markStore(e2, vars))
+    }
+}
+
+def simplifySym(s: SymStore): SymStore = {
+    s match {
+        case SymCst(_) => s
+        case SymVar(_) => s
+        case NOT(e1) => NOT(simplifySym(e1))
+        case AND(e1, e2) => AND(simplifySym(e1), simplifySym(e2))
+        case OR(e1, e2) => OR(simplifySym(e1), simplifySym(e2))
+        case EQ(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 == i2)))
+                case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => SymCst(Cst(B(b1 == b2)))
+                case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => SymCst(Cst(B(s1 == s2)))
+                case _ => EQ(l, r)
+            }
+        }
+        case LT(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 < i2)))
+                case _ => LT(l, r)
+            }
+        }
+        case GT(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 > i2)))
+                case _ => GT(l, r)
+            }
+        }
+        case LE(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 <= i2)))
+                case _ => LE(l, r)
+            }
+        }
+        case GE(e1, e2) => {
+            val l = simplifySym(e1)
+            val r = simplifySym(e2)
+            (l, r) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => SymCst(Cst(B(i1 >= i2)))
+                case _ => GE(l, r)
+            }
+        }
+    }
+}
+
+// --------------------------------------------
+// Elimination handlers for the symbolic domain
+
+def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]} : (SymStore, SymStore)/{
+    cstI[SymStore, SymStore],
+    varI[SymStore, SymStore],
+    asgnI[SymStore, SymStore],
+    
+    eqI[SymStore, SymStore],
+    ltI[SymStore, SymStore],
+    gtI[SymStore, SymStore],
+    leI[SymStore, SymStore],
+    geI[SymStore, SymStore]
+    // plusI[SymStore, SymStore],
+    // minusI[SymStore, SymStore],
+    // notI[SymStore, SymStore],
+    // ifI[SymStore, SymStore],
+    // whileI[SymStore, SymStore],
+    // seqI[SymStore, SymStore],
+    // skipI[SymStore, SymStore]
+}= {
+    try prog()
+    with Elimination[SymStore, SymStore]{
+        def cstE(st, v) = {
+            do cstI(st, v)
+        }
+        def varE(st, x) = {
+            // println("Entered var elim")
+            do varI(st, x)
+        }
+        def plusE(st, e1, e2) = {
+            (SymCst(Plus(e1, e2)), st)
+        }
+        def minusE(st, e1, e2) = {
+            (SymCst(Minus(e1, e2)), st)
+        }
+        def notE(st, e) = {
+            (SymCst(Not(e)), st)
+        }
+        def eqE(st, e1, e2) = {
+            val (v1, _) = resume((E(e1), st))
+            val (v2, _) = resume((E(e2), st))
+            do eqI(st, v1, v2)
+        }
+        def ltE(st, e1, e2) = {
+            val (v1, _) = resume((E(e1), st))
+            val (v2, _) = resume((E(e2), st))
+            do ltI(st, v1, v2)
+        }
+        def gtE(st, e1, e2) = {
+            val (v1, _) = resume((E(e1), st))
+            val (v2, _) = resume((E(e2), st))
+            do gtI(st, v1, v2)
+        }
+        def leE(st, e1, e2) = {
+            val (v1, _) = resume((E(e1), st))
+            val (v2, _) = resume((E(e2), st))
+            do leI(st, v1, v2)
+        }
+        def geE(st, e1, e2) = {
+            val (v1, _) = resume((E(e1), st))
+            val (v2, _) = resume((E(e2), st))
+            do geI(st, v1, v2)
+        }
+        def asgnE(st, x, v) = {
+            // println("Entered asgn elim for " ++ x)
+            do asgnI(st, x, SymCst(v))
+        }
+        def ifE(st, g, t, f) = {
+            val (gv, _) = resume((E(g), st))
+            val (fv, fs) = resume((S(f), st))
+            val (tv, ts) = resume((S(t), st))
+            (SymCst(Cst(U())), OR(AND(fs, NOT(gv)), AND(ts, gv)))
+        }
+        def whileE(st, g, b) = {
+            //find everything modified in body
+            val modified:Set[String] = findModified(b, set::emptyGeneric())
+            // mark it as unkown
+            val marked = markStore(st, modified)
+            //return new store
+            (SymCst(Cst(U())), marked)
+        }
+        def seqE(st, s1, s2) = {
+            // println(">=entered seq elim=<");
+            // println("> seq statements: s1=" ++ syntax::toString(s1) ++ ", s2=" ++ syntax::toString(s2))
+            val (_, st1) = resume((S(s2), st));
+            // println(">==state after s2==<");
+            // printSym(st1);
+            // println(">==resuming s1==<" ++ syntax::toString(s1));
+            val (v2, st2) = resume((S(s1), st1))
+            // println(">==state after s1==<");
+            // printSym(st2);
+            (v2, st2)
+        }
+        def skipE(st) = {
+            (SymCst(Cst(U())), st)
+        }
+    }
+}
+
+// ---------------------------------------------
+// Introduction handlers for the symbolic domain
+/*
+def symbolicCstI {prog: => (SymStore, SymStore)/cstI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with cstI[SymStore, SymStore] {(st, v) =>
+        resume((SymCst(Cst(v)), st))
+    }
+}
+
+def symbolicVarI {prog: => (SymStore, SymStore)/varI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with varI[SymStore, SymStore] {(st, x) =>
+    //   println("Entered varI for: " ++ x)
+        resume((SymVar(x), st))
+    }
+}
+
+def symbolicAsgnI {prog: => (SymStore, SymStore)/asgnI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with asgnI[SymStore, SymStore] {(st, x, v) =>
+        // println("Entered asgnI for " ++ x)
+        v match {
+            case SymCst(v) => resume((SymCst(Cst(U())), replace(st, x, v)))
+            case _  => resume((SymCst(Cst(U())), st))
+        }        
+    }
+}
+
+def symbolicEqI {prog: => (SymStore, SymStore)/eqI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with eqI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 == i2))), st))
+                case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => resume((SymCst(Cst(B(b1 == b2))), st))
+                case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
+                case _ => resume((EQ(d1, d2), st))
+            }
+        }
+}
+
+def symbolicLtI {prog: => (SymStore, SymStore)/ltI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with ltI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
+                case _ => resume((LT(d1, d2), st))
+            }
+        }
+}
+
+def symbolicGtI {prog: => (SymStore, SymStore)/gtI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with gtI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 > i2))), st))
+                case _ => resume((GT(d1, d2), st))
+            }
+        }
+}
+
+def symbolicLeI {prog: => (SymStore, SymStore)/leI[SymStore, SymStore]}: (SymStore, SymStore) = {
+    try prog()
+    with leI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 <= i2))), st))
+                case _ => resume((LE(d1, d2), st))
+            }
+        }
+}
+*/
+def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
+        try {
+            with symbolicElim()
+            eval((prog, init))
+        }
+        with cstI[SymStore, SymStore] {(st, v) =>
+            resume((SymCst(Cst(v)), st))
+        }
+        with varI[SymStore, SymStore] {(st, x) =>
+        //   println("Entered varI for: " ++ x)
+            resume((SymVar(x), st))
+        }
+        with asgnI[SymStore, SymStore] {(st, x, v) =>
+            // println("Entered asgnI for " ++ x)
+            v match {
+                case SymCst(v) => resume((SymCst(Cst(U())), replace(st, x, v)))
+                case _  => resume((SymCst(Cst(U())), st))
+            }        
+        }
+        with eqI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 == i2))), st))
+                case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => resume((SymCst(Cst(B(b1 == b2))), st))
+                case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
+                case _ => resume((EQ(d1, d2), st))
+            }
+        } 
+        with ltI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
+        }
+        with gtI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 > i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
+        }
+        with leI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 <= i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
+        }
+        with geI[SymStore, SymStore] {(st, d1, d2) =>
+            (d1, d2) match {
+                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 >= i2))), st))
+                case _ => resume((SymCst(Cst(B(false))), st))
+            }
+        }
+}
+
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val init: SymStore = EQ(SymVar("x"), SymCst(Cst(I(1))))
+
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        // read json ast
+        val jsonFile: String = filesystem::readFile(f)
+        feed(jsonFile) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          // evaluate
+          val (v, s) = run(parsed, init)
+          // extract end state
+          
+          // print output
+          println("---------")
+          printSym(s)
+        //   printSym(v)
+          println("---------")
+        }
+      }
+    }
+    case Nil() => println("no file passed in")
+  }
+}
