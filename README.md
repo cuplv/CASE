@@ -13,6 +13,11 @@
     - for chez scheme builds *(mix of portability and performance)*
         - `effekt --backend chez-callcc <analysis>.effekt`
 
+# passing results to z3
+
+- `| z3 -in -smt2`
+    + pipes the results into z3
+
 # Supported Python
 
 ## Type Checking
