@@ -22,6 +22,7 @@ type SymStore{
     NOT(e1: SymStore)
     AND(e1: SymStore, e2: SymStore)
     OR(e1: SymStore, e2: SymStore)
+    IMP(e1: SymStore, e2: SymStore) // e1 implies e2
     
     //Comparsion
     EQ(e1: SymStore, e2: SymStore)
@@ -39,6 +40,7 @@ def symToString(s: SymStore): String = {
         case SymVar(x) => "SymVar(\"" ++ x ++ "\")"
         case NOT(e1) => "NOT(" ++ symToString(e1) ++ ")"
         case AND(e1, e2) => "AND(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
+        case IMP(e1, e2) => "IMP(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
         case OR(e1, e2) => "OR(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
         case EQ(e1, e2) => "EQ(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
         case LT(e1, e2) => "LT(" ++ symToString(e1) ++ ", " ++ symToString(e2) ++ ")"
@@ -79,6 +81,7 @@ def replace(e:SymStore, ident: String, value: Expr): SymStore = {
         case NOT(e1) => NOT(replace(e1, ident, value))
         case AND(e1, e2) => AND(replace(e1, ident, value), replace(e2, ident, value))
         case OR(e1, e2) => OR(replace(e1, ident, value), replace(e2, ident, value))
+        case IMP(e1, e2) => IMP(replace(e1, ident, value), replace(e2, ident, value))
         case EQ(e1, e2) => EQ(replace(e1, ident, value), replace(e2, ident, value))
         case LT(e1, e2) => LT(replace(e1, ident, value), replace(e2, ident, value))
         case GT(e1, e2) => GT(replace(e1, ident, value), replace(e2, ident, value))
@@ -122,6 +125,7 @@ def markStore(s:SymStore, vars: Set[String]):SymStore = {
         case NOT(e1) => NOT(markStore(e1, vars))
         case AND(e1, e2) => AND(markStore(e1, vars), markStore(e2, vars))
         case OR(e1, e2) => OR(markStore(e1, vars), markStore(e2, vars))
+        case IMP(e1, e2) => IMP(markStore(e1, vars), markStore(e2, vars))
         case EQ(e1, e2) => EQ(markStore(e1, vars), markStore(e2, vars))
         case LT(e1, e2) => LT(markStore(e1, vars), markStore(e2, vars))
         case GT(e1, e2) => GT(markStore(e1, vars), markStore(e2, vars))
@@ -137,6 +141,7 @@ def simplifySym(s: SymStore): SymStore = {
         case NOT(e1) => NOT(simplifySym(e1))
         case AND(e1, e2) => AND(simplifySym(e1), simplifySym(e2))
         case OR(e1, e2) => OR(simplifySym(e1), simplifySym(e2))
+        case IMP(e1, e2) => IMP(simplifySym(e1), simplifySym(e2))
         case EQ(e1, e2) => {
             val l = simplifySym(e1)
             val r = simplifySym(e2)
@@ -254,7 +259,7 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             val (gv, _) = resume((E(g), st))
             val (fv, fs) = resume((S(f), st))
             val (tv, ts) = resume((S(t), st))
-            (SymCst(Cst(U())), OR(AND(fs, NOT(gv)), AND(ts, gv)))
+            (SymCst(Cst(U())), AND(IMP(gv, ts), IMP(NOT(gv), fs)))
         }
         def whileE(st, g, b) = {
             //find everything modified in body

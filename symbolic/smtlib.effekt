@@ -29,6 +29,7 @@ def symToSmt(s: SymStore): String = {
 		case NOT(e1) => "(not " ++ symToSmt(e1) ++ ")"
 		case AND(e1, e2) => "(and " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
 		case OR(e1, e2) => "(or " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
+		case IMP(e1, e2) => "(=> " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
 		case EQ(e1, e2) => "(= " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
 		case LT(e1, e2) => "(< " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
 		case GT(e1, e2) => "(> " ++ symToSmt(e1) ++ " " ++ symToSmt(e2) ++ ")"
@@ -48,6 +49,7 @@ def freeVarsSym(s: SymStore): Set[String] = {
 		case NOT(e1) => freeVarsSym(e1)
 		case AND(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
 		case OR(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
+    case IMP(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
 		case EQ(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
 		case LT(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
 		case GT(e1, e2) => set::union(freeVarsSym(e1), freeVarsSym(e2))
@@ -89,6 +91,10 @@ def collectSymVars(s: SymStore, seen: Set[String], acc: List[String]): (List[Str
 			val (a1, s1) = collectSymVars(e1, seen, acc)
 			collectSymVars(e2, s1, a1)
 		}
+    case IMP(e1, e2) => {
+      val (a1, s1) = collectSymVars(e1, seen, acc)
+      collectSymVars(e2, s1, a1)
+    }
 		case EQ(e1, e2) => {
 			val (a1, s1) = collectSymVars(e1, seen, acc)
 			collectSymVars(e2, s1, a1)
