@@ -153,7 +153,11 @@ run-concrete-all:
   fi
 
 run-smt-all:
-  @if {{smt_built}}; then \
+  @if ! {{smt_built}}; then \
+    just build-smt; \
+  fi; \
+  if {{smt_built}}; then \
+    just build-json; \
     rm -f smt_output.txt; \
     for f in pylang/tests/*.json; do \
       file="$(basename "$f" .json)"; \
