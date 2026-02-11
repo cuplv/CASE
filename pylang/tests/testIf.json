@@ -2,24 +2,6 @@
   "type": "Module",
   "body": [
     {
-      "type": "Assign",
-      "targets": [
-        {
-          "type": "Name",
-          "id": "x",
-          "ctx": {
-            "type": "Store"
-          }
-        }
-      ],
-      "value": {
-        "type": "Constant",
-        "value": 10,
-        "kind": null
-      },
-      "type_comment": null
-    },
-    {
       "type": "If",
       "test": {
         "type": "Compare",
@@ -129,5 +111,30 @@
       "type_comment": null
     }
   ],
-  "type_ignores": []
+  "type_ignores": [],
+  "assertion": {
+    "string": "x==50",
+    "ast": {
+      "type": "Compare",
+      "left": {
+        "type": "Name",
+        "id": "x",
+        "ctx": {
+          "type": "Load"
+        }
+      },
+      "ops": [
+        {
+          "type": "Eq"
+        }
+      ],
+      "comparators": [
+        {
+          "type": "Constant",
+          "value": 50,
+          "kind": null
+        }
+      ]
+    }
+  }
 }
