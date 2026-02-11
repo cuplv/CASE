@@ -53,5 +53,30 @@
       "type_comment": null
     }
   ],
-  "type_ignores": []
+  "type_ignores": [],
+  "assertion": {
+    "string": "x==2",
+    "ast": {
+      "type": "Compare",
+      "left": {
+        "type": "Name",
+        "id": "x",
+        "ctx": {
+          "type": "Load"
+        }
+      },
+      "ops": [
+        {
+          "type": "Eq"
+        }
+      ],
+      "comparators": [
+        {
+          "type": "Constant",
+          "value": 2,
+          "kind": null
+        }
+      ]
+    }
+  }
 }
