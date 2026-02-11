@@ -187,6 +187,11 @@ def main() = {
           // parse end state into smtlib
           val smt = symStoreToSmtScript(s)
           // print output
+          println("---------")
+          println("Starting postcondition: ")
+          printSym(init)
+          println("---------")
+          println("SMT-LIB output: ")
           println(smt)
         }
       }
