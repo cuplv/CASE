@@ -53,7 +53,7 @@
   ],
   "type_ignores": [],
   "assertion": {
-    "string": "y==3",
+    "string": "y==2",
     "ast": {
       "type": "Compare",
       "left": {
@@ -71,7 +71,7 @@
       "comparators": [
         {
           "type": "Constant",
-          "value": 3,
+          "value": 2,
           "kind": null
         }
       ]
