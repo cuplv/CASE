@@ -406,10 +406,40 @@ def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
         }
 }
 
+def exprToSymStore(e: Expr): SymStore = {
+    e match {
+        case Cst(v) => SymCst(Cst(v))
+        case Var(x) => SymVar(x)
+        case Plus(e1, e2) => SymCst(Plus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2)))
+        case Minus(e1, e2) => SymCst(Minus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2)))
+        case Not(e1) => SymCst(Not(exprToSymStoreExpr(e1)))
+        case Eq(e1, e2) => EQ(exprToSymStore(e1), exprToSymStore(e2))
+        case Lt(e1, e2) => LT(exprToSymStore(e1), exprToSymStore(e2))
+        case Gt(e1, e2) => GT(exprToSymStore(e1), exprToSymStore(e2))
+        case Le(e1, e2) => LE(exprToSymStore(e1), exprToSymStore(e2))
+        case Ge(e1, e2) => GE(exprToSymStore(e1), exprToSymStore(e2))
+    }
+}
+
+def exprToSymStoreExpr(e: Expr): Expr = {
+    e match {
+        case Cst(v) => Cst(v)
+        case Var(x) => Var(x)
+        case Plus(e1, e2) => Plus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
+        case Minus(e1, e2) => Minus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
+        case Not(e1) => Not(exprToSymStoreExpr(e1))
+        case Eq(e1, e2) => Eq(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
+        case Lt(e1, e2) => Lt(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
+        case Gt(e1, e2) => Gt(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
+        case Le(e1, e2) => Le(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
+        case Ge(e1, e2) => Ge(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
+    }
+}
+
 def main() = {
   with on[WrongFormat].panic
   with on[IOError].panic
-  val init: SymStore = EQ(SymVar("x"), SymCst(Cst(I(1))))
+  val defaultInit: SymStore = EQ(SymVar("x"), SymCst(Cst(I(1))))
 
   // parse files to evaluate
   val file: List[String] = args::commandLineArgs()
@@ -426,7 +456,7 @@ def main() = {
           // parse to Prog
           val parsed = pythonAstToProg(jsonVal)
           // evaluate
-          val (v, s) = run(parsed, init)
+          val (v, s) = run(parsed, defaultInit)
           // extract end state
           
           // print output
