@@ -1,0 +1,140 @@
+{
+  "type": "Module",
+  "body": [
+    {
+      "type": "If",
+      "test": {
+        "type": "Compare",
+        "left": {
+          "type": "Name",
+          "id": "x",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "ops": [
+          {
+            "type": "Lt"
+          }
+        ],
+        "comparators": [
+          {
+            "type": "Constant",
+            "value": 20,
+            "kind": null
+          }
+        ]
+      },
+      "body": [
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "x",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "BinOp",
+            "left": {
+              "type": "Name",
+              "id": "x",
+              "ctx": {
+                "type": "Load"
+              }
+            },
+            "op": {
+              "type": "Add"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "kind": null
+            }
+          },
+          "type_comment": null
+        }
+      ],
+      "orelse": [
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "x",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "Constant",
+            "value": 50,
+            "kind": null
+          },
+          "type_comment": null
+        }
+      ]
+    },
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "y",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "BinOp",
+        "left": {
+          "type": "Name",
+          "id": "x",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "op": {
+          "type": "Add"
+        },
+        "right": {
+          "type": "Constant",
+          "value": 12,
+          "kind": null
+        }
+      },
+      "type_comment": null
+    }
+  ],
+  "type_ignores": [],
+  "assertion": {
+    "string": "x==50",
+    "ast": {
+      "type": "Compare",
+      "left": {
+        "type": "Name",
+        "id": "x",
+        "ctx": {
+          "type": "Load"
+        }
+      },
+      "ops": [
+        {
+          "type": "Eq"
+        }
+      ],
+      "comparators": [
+        {
+          "type": "Constant",
+          "value": 50,
+          "kind": null
+        }
+      ]
+    }
+  }
+}
