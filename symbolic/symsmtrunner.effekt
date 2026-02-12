@@ -13,6 +13,21 @@ import json
 import map
 import scanner
 
+extern def runZ3(smt: String): String =
+  jsNode """(function () {
+    const { spawnSync } = require('child_process');
+    try {
+      const result = spawnSync('z3', ['-in', '-smt2'], {
+        input: ${smt},
+        encoding: 'utf-8'
+      });
+      return result.stdout || result.stderr
+    } catch (err) {
+        return err.message
+    }
+  })()
+  """
+
 def tryGetAssertionFromJson(jsonVal: JsonValue): Option[JsonValue] = {
   // Try to extract "assertion" field from JSON object
   // Returns the assertion object (which has 'ast' field) if found, None otherwise
@@ -194,6 +209,9 @@ def main() = {
           println("---------")
           println("SMT-LIB output: ")
           println(smt)
+          println("---------")
+          println("Z3 output: ")
+          println(runZ3(smt))
         }
       }
     }

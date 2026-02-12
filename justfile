@@ -1,5 +1,12 @@
+set unstable
+
 # os dependent extension
 os_ext := if os() == "windows" {".bat"} else {""}
+
+java_exe := if which("java") == "" {"java not installed..."} else {which("java")}
+npm_exe := if which("npm") == "" {"npm not installed..."} else {which("npm")}
+z3_exe := if which("z3") == "" {"z3 not installed..."} else {which("z3")}
+python3_exe := if which("python3") == "" {"python3 not installed..."} else {which("python3")}
 
 # effekt exe path
 effekt := "./node_modules/@effekt-lang/effekt/bin/effekt"
@@ -40,6 +47,7 @@ arg := if backend == "js" {
 }
 
 help:
+  @echo 'check            := check required dependencies'
   @echo 'init             := install `effekt` language'
   @echo 'clean            := remove build/output artifacts'
   @echo 'build-json       := build json ast of python test files'
@@ -58,6 +66,17 @@ help:
   @echo 'run-smt-all      := run SMT evaluation on all json test files'
   @echo 'parser-test-all  := run parser on JSON ast test files'
   @echo 'parser-test      := run parser on input'
+
+check:
+  @echo "> checking java..."
+  @echo '{{java_exe}}'
+  @echo "> checking npm..."
+  @echo '{{npm_exe}}'
+  @echo "> checking python..."
+  @echo '{{python3_exe}}'
+  @echo "> checking z3..."
+  @echo '{{z3_exe}}'
+
 
 init:
   npm i @effekt-lang/effekt
