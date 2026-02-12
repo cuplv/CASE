@@ -72,6 +72,7 @@ def getField(name: String, fields: List[(String, JsonValue)]): JsonValue =
     case None() => Null()
   }
 
+
 def parseCompare(fields: List[(String, JsonValue)]): Expr = {
   val left = jsonToExpr(getField("left", fields))
   getField("comparators", fields) match {
@@ -174,7 +175,8 @@ def main() = {
                 case Some(astJson) => {
                   // Convert the assertion AST to an Expr, then to a SymStore
                   val expr = jsonToExpr(astJson)
-                  symbolic::exprToSymStore(expr)
+                  val (v, _) = run(E(expr), defaultInit) // This is kinda a cool use of our eval to translate expr to symstore
+                  v
                 }
                 case None() => defaultInit
               }
@@ -187,7 +189,6 @@ def main() = {
           // parse end state into smtlib
           val smt = symStoreToSmtScript(s)
           // print output
-          println("---------")
           println("Starting postcondition: ")
           printSym(init)
           println("---------")

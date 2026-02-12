@@ -14,8 +14,8 @@ def symStoreToSmtScript(s: SymStore): String = {
 		Cons("(set-logic ALL)", Nil()),
 		appendLines(
 			decls,
-			Cons("(assert (not " ++ symToSmt(s) ++ "))",
-				Cons("(check-sat)", Cons("(get-model)", Nil()))
+			Cons("(simplify " ++ symToSmt(s) ++ ")",
+				Nil()
 			)
 		)
 	)

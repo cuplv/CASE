@@ -256,7 +256,8 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
             do asgnI(st, x, SymCst(v))
         }
         def ifE(st, g, t, f) = {
-            val (gv, _) = resume((E(g), st))
+            // convert guard to symbolic condition
+            val (gv, _) = resume((E(g), st)) 
             val (fv, fs) = resume((S(f), st))
             val (tv, ts) = resume((S(t), st))
             (SymCst(Cst(U())), AND(IMP(gv, ts), IMP(NOT(gv), fs)))
@@ -378,67 +379,20 @@ def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
             }        
         }
         with eqI[SymStore, SymStore] {(st, d1, d2) =>
-            (d1, d2) match {
-                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 == i2))), st))
-                case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => resume((SymCst(Cst(B(b1 == b2))), st))
-                case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
-                case _ => resume((EQ(d1, d2), st))
-            }
+          resume((EQ(d1, d2), st))
         } 
         with ltI[SymStore, SymStore] {(st, d1, d2) =>
-            (d1, d2) match {
-                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
-                case _ => resume((SymCst(Cst(B(false))), st))
-            }
+          resume((LT(d1, d2), st))
         }
         with gtI[SymStore, SymStore] {(st, d1, d2) =>
-            (d1, d2) match {
-                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 > i2))), st))
-                case _ => resume((SymCst(Cst(B(false))), st))
-            }
+            resume((GT(d1, d2), st))
         }
         with leI[SymStore, SymStore] {(st, d1, d2) =>
-            (d1, d2) match {
-                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 <= i2))), st))
-                case _ => resume((SymCst(Cst(B(false))), st))
-            }
+            resume((LE(d1, d2), st))
         }
         with geI[SymStore, SymStore] {(st, d1, d2) =>
-            (d1, d2) match {
-                case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 >= i2))), st))
-                case _ => resume((SymCst(Cst(B(false))), st))
-            }
+            resume((GE(d1, d2), st))
         }
-}
-
-def exprToSymStore(e: Expr): SymStore = {
-    e match {
-        case Cst(v) => SymCst(Cst(v))
-        case Var(x) => SymVar(x)
-        case Plus(e1, e2) => SymCst(Plus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2)))
-        case Minus(e1, e2) => SymCst(Minus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2)))
-        case Not(e1) => SymCst(Not(exprToSymStoreExpr(e1)))
-        case Eq(e1, e2) => EQ(exprToSymStore(e1), exprToSymStore(e2))
-        case Lt(e1, e2) => LT(exprToSymStore(e1), exprToSymStore(e2))
-        case Gt(e1, e2) => GT(exprToSymStore(e1), exprToSymStore(e2))
-        case Le(e1, e2) => LE(exprToSymStore(e1), exprToSymStore(e2))
-        case Ge(e1, e2) => GE(exprToSymStore(e1), exprToSymStore(e2))
-    }
-}
-
-def exprToSymStoreExpr(e: Expr): Expr = {
-    e match {
-        case Cst(v) => Cst(v)
-        case Var(x) => Var(x)
-        case Plus(e1, e2) => Plus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
-        case Minus(e1, e2) => Minus(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
-        case Not(e1) => Not(exprToSymStoreExpr(e1))
-        case Eq(e1, e2) => Eq(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
-        case Lt(e1, e2) => Lt(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
-        case Gt(e1, e2) => Gt(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
-        case Le(e1, e2) => Le(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
-        case Ge(e1, e2) => Ge(exprToSymStoreExpr(e1), exprToSymStoreExpr(e2))
-    }
 }
 
 def main() = {
