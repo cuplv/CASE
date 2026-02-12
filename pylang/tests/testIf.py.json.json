@@ -1,0 +1,1033 @@
+{
+  "type": "Module",
+  "body": [
+    {
+      "type": "Expr",
+      "value": {
+        "type": "Dict",
+        "keys": [
+          {
+            "type": "Constant",
+            "value": "type",
+            "kind": null
+          },
+          {
+            "type": "Constant",
+            "value": "body",
+            "kind": null
+          },
+          {
+            "type": "Constant",
+            "value": "type_ignores",
+            "kind": null
+          },
+          {
+            "type": "Constant",
+            "value": "assertion",
+            "kind": null
+          }
+        ],
+        "values": [
+          {
+            "type": "Constant",
+            "value": "Module",
+            "kind": null
+          },
+          {
+            "type": "List",
+            "elts": [
+              {
+                "type": "Dict",
+                "keys": [
+                  {
+                    "type": "Constant",
+                    "value": "type",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "test",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "body",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "orelse",
+                    "kind": null
+                  }
+                ],
+                "values": [
+                  {
+                    "type": "Constant",
+                    "value": "If",
+                    "kind": null
+                  },
+                  {
+                    "type": "Dict",
+                    "keys": [
+                      {
+                        "type": "Constant",
+                        "value": "type",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "left",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "ops",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "comparators",
+                        "kind": null
+                      }
+                    ],
+                    "values": [
+                      {
+                        "type": "Constant",
+                        "value": "Compare",
+                        "kind": null
+                      },
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "id",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "ctx",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Name",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "x",
+                            "kind": null
+                          },
+                          {
+                            "type": "Dict",
+                            "keys": [
+                              {
+                                "type": "Constant",
+                                "value": "type",
+                                "kind": null
+                              }
+                            ],
+                            "values": [
+                              {
+                                "type": "Constant",
+                                "value": "Load",
+                                "kind": null
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "List",
+                        "elts": [
+                          {
+                            "type": "Dict",
+                            "keys": [
+                              {
+                                "type": "Constant",
+                                "value": "type",
+                                "kind": null
+                              }
+                            ],
+                            "values": [
+                              {
+                                "type": "Constant",
+                                "value": "Lt",
+                                "kind": null
+                              }
+                            ]
+                          }
+                        ],
+                        "ctx": {
+                          "type": "Load"
+                        }
+                      },
+                      {
+                        "type": "List",
+                        "elts": [
+                          {
+                            "type": "Dict",
+                            "keys": [
+                              {
+                                "type": "Constant",
+                                "value": "type",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": "value",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": "kind",
+                                "kind": null
+                              }
+                            ],
+                            "values": [
+                              {
+                                "type": "Constant",
+                                "value": "Constant",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": 20,
+                                "kind": null
+                              },
+                              {
+                                "type": "Name",
+                                "id": "null",
+                                "ctx": {
+                                  "type": "Load"
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "ctx": {
+                          "type": "Load"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "List",
+                    "elts": [
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "targets",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "value",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "type_comment",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Assign",
+                            "kind": null
+                          },
+                          {
+                            "type": "List",
+                            "elts": [
+                              {
+                                "type": "Dict",
+                                "keys": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "type",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "id",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "ctx",
+                                    "kind": null
+                                  }
+                                ],
+                                "values": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "Name",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "x",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Dict",
+                                    "keys": [
+                                      {
+                                        "type": "Constant",
+                                        "value": "type",
+                                        "kind": null
+                                      }
+                                    ],
+                                    "values": [
+                                      {
+                                        "type": "Constant",
+                                        "value": "Store",
+                                        "kind": null
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ],
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          },
+                          {
+                            "type": "Dict",
+                            "keys": [
+                              {
+                                "type": "Constant",
+                                "value": "type",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": "left",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": "op",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": "right",
+                                "kind": null
+                              }
+                            ],
+                            "values": [
+                              {
+                                "type": "Constant",
+                                "value": "BinOp",
+                                "kind": null
+                              },
+                              {
+                                "type": "Dict",
+                                "keys": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "type",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "id",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "ctx",
+                                    "kind": null
+                                  }
+                                ],
+                                "values": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "Name",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "x",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Dict",
+                                    "keys": [
+                                      {
+                                        "type": "Constant",
+                                        "value": "type",
+                                        "kind": null
+                                      }
+                                    ],
+                                    "values": [
+                                      {
+                                        "type": "Constant",
+                                        "value": "Load",
+                                        "kind": null
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "Dict",
+                                "keys": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "type",
+                                    "kind": null
+                                  }
+                                ],
+                                "values": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "Add",
+                                    "kind": null
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "Dict",
+                                "keys": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "type",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "value",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "kind",
+                                    "kind": null
+                                  }
+                                ],
+                                "values": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "Constant",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": 1,
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Name",
+                                    "id": "null",
+                                    "ctx": {
+                                      "type": "Load"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "Name",
+                            "id": "null",
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "ctx": {
+                      "type": "Load"
+                    }
+                  },
+                  {
+                    "type": "List",
+                    "elts": [
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "targets",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "value",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "type_comment",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Assign",
+                            "kind": null
+                          },
+                          {
+                            "type": "List",
+                            "elts": [
+                              {
+                                "type": "Dict",
+                                "keys": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "type",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "id",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "ctx",
+                                    "kind": null
+                                  }
+                                ],
+                                "values": [
+                                  {
+                                    "type": "Constant",
+                                    "value": "Name",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Constant",
+                                    "value": "x",
+                                    "kind": null
+                                  },
+                                  {
+                                    "type": "Dict",
+                                    "keys": [
+                                      {
+                                        "type": "Constant",
+                                        "value": "type",
+                                        "kind": null
+                                      }
+                                    ],
+                                    "values": [
+                                      {
+                                        "type": "Constant",
+                                        "value": "Store",
+                                        "kind": null
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ],
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          },
+                          {
+                            "type": "Dict",
+                            "keys": [
+                              {
+                                "type": "Constant",
+                                "value": "type",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": "value",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": "kind",
+                                "kind": null
+                              }
+                            ],
+                            "values": [
+                              {
+                                "type": "Constant",
+                                "value": "Constant",
+                                "kind": null
+                              },
+                              {
+                                "type": "Constant",
+                                "value": 50,
+                                "kind": null
+                              },
+                              {
+                                "type": "Name",
+                                "id": "null",
+                                "ctx": {
+                                  "type": "Load"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "type": "Name",
+                            "id": "null",
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "ctx": {
+                      "type": "Load"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "Dict",
+                "keys": [
+                  {
+                    "type": "Constant",
+                    "value": "type",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "targets",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "value",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "type_comment",
+                    "kind": null
+                  }
+                ],
+                "values": [
+                  {
+                    "type": "Constant",
+                    "value": "Assign",
+                    "kind": null
+                  },
+                  {
+                    "type": "List",
+                    "elts": [
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "id",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "ctx",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Name",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "y",
+                            "kind": null
+                          },
+                          {
+                            "type": "Dict",
+                            "keys": [
+                              {
+                                "type": "Constant",
+                                "value": "type",
+                                "kind": null
+                              }
+                            ],
+                            "values": [
+                              {
+                                "type": "Constant",
+                                "value": "Store",
+                                "kind": null
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "ctx": {
+                      "type": "Load"
+                    }
+                  },
+                  {
+                    "type": "Dict",
+                    "keys": [
+                      {
+                        "type": "Constant",
+                        "value": "type",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "left",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "op",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "right",
+                        "kind": null
+                      }
+                    ],
+                    "values": [
+                      {
+                        "type": "Constant",
+                        "value": "BinOp",
+                        "kind": null
+                      },
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "id",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "ctx",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Name",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "x",
+                            "kind": null
+                          },
+                          {
+                            "type": "Dict",
+                            "keys": [
+                              {
+                                "type": "Constant",
+                                "value": "type",
+                                "kind": null
+                              }
+                            ],
+                            "values": [
+                              {
+                                "type": "Constant",
+                                "value": "Load",
+                                "kind": null
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Add",
+                            "kind": null
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "value",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "kind",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Constant",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": 12,
+                            "kind": null
+                          },
+                          {
+                            "type": "Name",
+                            "id": "null",
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "Name",
+                    "id": "null",
+                    "ctx": {
+                      "type": "Load"
+                    }
+                  }
+                ]
+              }
+            ],
+            "ctx": {
+              "type": "Load"
+            }
+          },
+          {
+            "type": "List",
+            "elts": [],
+            "ctx": {
+              "type": "Load"
+            }
+          },
+          {
+            "type": "Dict",
+            "keys": [
+              {
+                "type": "Constant",
+                "value": "string",
+                "kind": null
+              },
+              {
+                "type": "Constant",
+                "value": "ast",
+                "kind": null
+              }
+            ],
+            "values": [
+              {
+                "type": "Constant",
+                "value": "x==50",
+                "kind": null
+              },
+              {
+                "type": "Dict",
+                "keys": [
+                  {
+                    "type": "Constant",
+                    "value": "type",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "left",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "ops",
+                    "kind": null
+                  },
+                  {
+                    "type": "Constant",
+                    "value": "comparators",
+                    "kind": null
+                  }
+                ],
+                "values": [
+                  {
+                    "type": "Constant",
+                    "value": "Compare",
+                    "kind": null
+                  },
+                  {
+                    "type": "Dict",
+                    "keys": [
+                      {
+                        "type": "Constant",
+                        "value": "type",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "id",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "ctx",
+                        "kind": null
+                      }
+                    ],
+                    "values": [
+                      {
+                        "type": "Constant",
+                        "value": "Name",
+                        "kind": null
+                      },
+                      {
+                        "type": "Constant",
+                        "value": "x",
+                        "kind": null
+                      },
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Load",
+                            "kind": null
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "List",
+                    "elts": [
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Eq",
+                            "kind": null
+                          }
+                        ]
+                      }
+                    ],
+                    "ctx": {
+                      "type": "Load"
+                    }
+                  },
+                  {
+                    "type": "List",
+                    "elts": [
+                      {
+                        "type": "Dict",
+                        "keys": [
+                          {
+                            "type": "Constant",
+                            "value": "type",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "value",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": "kind",
+                            "kind": null
+                          }
+                        ],
+                        "values": [
+                          {
+                            "type": "Constant",
+                            "value": "Constant",
+                            "kind": null
+                          },
+                          {
+                            "type": "Constant",
+                            "value": 50,
+                            "kind": null
+                          },
+                          {
+                            "type": "Name",
+                            "id": "null",
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "ctx": {
+                      "type": "Load"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "type_ignores": []
+}

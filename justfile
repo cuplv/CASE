@@ -155,11 +155,11 @@ run-sym *FILE:
 
 run-smt *FILE:
   @if {{smt_built}}; then \
-    echo ">"{{FILE}}".py:"; \
+    echo ">"{{FILE}}":"; \
     echo "---------"; \
-    cat pylang/tests/{{FILE}}.py; \
+    cat pylang/tests/{{FILE}}; \
     echo "---------\n"; \
-    ./out/symsmtrunner{{os_ext}} pylang/tests/{{FILE}}.json; \
+    ./out/symsmtrunner{{os_ext}} pylang/tests/{{FILE}}; \
   else \
     echo "> SMT runner not built, run 'just build-smt'"; \
   fi

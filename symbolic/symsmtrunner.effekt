@@ -13,6 +13,20 @@ import json
 import map
 import scanner
 
+extern def genJson(file: String): String =
+  jsNode """(function () {
+    const { spawnSync } = require('child_process');
+    try {
+      const result = spawnSync('python3', ['astDump.py', '-f', ${file}], {
+        encoding: 'utf-8'
+      });
+      return result.stdout || result.stderr
+    } catch (err) {
+        return err.message
+    }
+  })()
+  """
+
 extern def runZ3(smt: String): String =
   jsNode """(function () {
     const { spawnSync } = require('child_process');
@@ -174,9 +188,12 @@ def main() = {
     case Cons(_, _) => {
       // for each file passed in
       file.foreach{ (f) =>
+        val res = genJson(f)
+        println(res)
+        val jsonFile = f ++ ".json"
         // read json ast
-        val jsonFile: String = filesystem::readFile(f)
-        feed(jsonFile) {
+        val jsonAst: String = filesystem::readFile(jsonFile)
+        feed(jsonAst) {
           with scanner[Char]
           // decode into effekt
           val (_, jsonVal) = build { decodeJson() }
