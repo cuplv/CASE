@@ -190,101 +190,76 @@ def simplifySym(s: SymStore): SymStore = {
 // --------------------------------------------
 // Elimination handlers for the symbolic domain
 
-def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore, Prog]} : (SymStore, SymStore)/{
+def symbolicElim {prog: => (SymStore, SymStore) / {cstE[SymStore, SymStore], varE[SymStore, Prog], asgnE[SymStore, Prog], binopE[SymStore, Prog], unopE[SymStore, Prog], ifE[SymStore, Prog], whileE[SymStore, Prog], seqE[SymStore, Prog], skipE[SymStore, SymStore]}} : (SymStore, SymStore) / {
     cstI[SymStore, SymStore],
     varI[SymStore, SymStore],
     asgnI[SymStore, SymStore],
-    
-    eqI[SymStore, SymStore],
-    ltI[SymStore, SymStore],
-    gtI[SymStore, SymStore],
-    leI[SymStore, SymStore],
-    geI[SymStore, SymStore]
-    // plusI[SymStore, SymStore],
-    // minusI[SymStore, SymStore],
-    // notI[SymStore, SymStore],
-    // ifI[SymStore, SymStore],
-    // whileI[SymStore, SymStore],
-    // seqI[SymStore, SymStore],
-    // skipI[SymStore, SymStore]
-}= {
+    binopI[SymStore, SymStore],
+    unopI[SymStore, SymStore],
+    ifI[SymStore, SymStore],
+    whileI[SymStore, SymStore],
+    seqI[SymStore, SymStore],
+    skipI[SymStore, SymStore]
+} = {
     try prog()
-    with Elimination[SymStore, SymStore, Prog]{
-        def cstE(st, v) = {
-            do cstI(st, v)
+    with cstE[SymStore, SymStore] { (st, v) =>
+        do cstI(st, v)
+    }
+    with varE[SymStore, Prog] { (st, x) =>
+        do varI(st, x)
+    }
+    with binopE[SymStore, Prog] { (st, op, e1, e2) =>
+        op match {
+            case PlusOp() => (SymCst(Plus(e1, e2)), st)
+            case MinusOp() => (SymCst(Minus(e1, e2)), st)
+            case EqOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, EqOp(), v1, v2)
+            case LtOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, LtOp(), v1, v2)
+            case GtOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, GtOp(), v1, v2)
+            case LeOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, LeOp(), v1, v2)
+            case GeOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, GeOp(), v1, v2)
         }
-        def varE(st, x) = {
-            // println("Entered var elim")
-            do varI(st, x)
+    }
+    with unopE[SymStore, Prog] { (st, op, e) =>
+        op match {
+            case NotOp() => (SymCst(Not(e)), st)
         }
-        def plusE(st, e1, e2) = {
-            (SymCst(Plus(e1, e2)), st)
-        }
-        def minusE(st, e1, e2) = {
-            (SymCst(Minus(e1, e2)), st)
-        }
-        def notE(st, e) = {
-            (SymCst(Not(e)), st)
-        }
-        def eqE(st, e1, e2) = {
-            val (v1, _) = resume((E(e1), st))
-            val (v2, _) = resume((E(e2), st))
-            do eqI(st, v1, v2)
-        }
-        def ltE(st, e1, e2) = {
-            val (v1, _) = resume((E(e1), st))
-            val (v2, _) = resume((E(e2), st))
-            do ltI(st, v1, v2)
-        }
-        def gtE(st, e1, e2) = {
-            val (v1, _) = resume((E(e1), st))
-            val (v2, _) = resume((E(e2), st))
-            do gtI(st, v1, v2)
-        }
-        def leE(st, e1, e2) = {
-            val (v1, _) = resume((E(e1), st))
-            val (v2, _) = resume((E(e2), st))
-            do leI(st, v1, v2)
-        }
-        def geE(st, e1, e2) = {
-            val (v1, _) = resume((E(e1), st))
-            val (v2, _) = resume((E(e2), st))
-            do geI(st, v1, v2)
-        }
-        def asgnE(st, x, v) = {
-            // println("Entered asgn elim for " ++ x)
-            do asgnI(st, x, SymCst(v))
-        }
-        def ifE(st, g, t, f) = {
-            // convert guard to symbolic condition
-            val (gv, _) = resume((E(g), st)) 
-            val (fv, fs) = resume((S(f), st))
-            val (tv, ts) = resume((S(t), st))
-            (SymCst(Cst(U())), AND(IMP(gv, ts), IMP(NOT(gv), fs)))
-        }
-        def whileE(st, g, b) = {
-            //find everything modified in body
-            val modified:Set[String] = findModified(b, set::emptyGeneric())
-            // mark it as unkown
-            val marked = markStore(st, modified)
-            //return new store
-            (SymCst(Cst(U())), marked)
-        }
-        def seqE(st, s1, s2) = {
-            // println(">=entered seq elim=<");
-            // println("> seq statements: s1=" ++ syntax::toString(s1) ++ ", s2=" ++ syntax::toString(s2))
-            val (_, st1) = resume((S(s2), st));
-            // println(">==state after s2==<");
-            // printSym(st1);
-            // println(">==resuming s1==<" ++ syntax::toString(s1));
-            val (v2, st2) = resume((S(s1), st1))
-            // println(">==state after s1==<");
-            // printSym(st2);
-            (v2, st2)
-        }
-        def skipE(st) = {
-            (SymCst(Cst(U())), st)
-        }
+    }
+    with asgnE[SymStore, Prog] { (st, x, v) =>
+        do asgnI(st, x, SymCst(v))
+    }
+    with ifE[SymStore, Prog] { (st, g, t, f) =>
+        val (gv, _) = resume((E(g), st))
+        val (fv, fs) = resume((S(f), st))
+        val (tv, ts) = resume((S(t), st))
+        (SymCst(Cst(U())), AND(IMP(gv, ts), IMP(NOT(gv), fs)))
+    }
+    with whileE[SymStore, Prog] { (st, g, b) =>
+        val modified:Set[String] = findModified(b, set::emptyGeneric())
+        val marked = markStore(st, modified)
+        (SymCst(Cst(U())), marked)
+    }
+    with seqE[SymStore, Prog] { (st, s1, s2) =>
+        val (_, st1) = resume((S(s2), st))
+        val (v2, st2) = resume((S(s1), st1))
+        (v2, st2)
+    }
+    with skipE[SymStore, SymStore] { (st) =>
+        (SymCst(Cst(U())), st)
     }
 }
 
@@ -368,30 +343,62 @@ def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
             resume((SymCst(Cst(v)), st))
         }
         with varI[SymStore, SymStore] {(st, x) =>
-        //   println("Entered varI for: " ++ x)
             resume((SymVar(x), st))
         }
         with asgnI[SymStore, SymStore] {(st, x, v) =>
-            // println("Entered asgnI for " ++ x)
             v match {
                 case SymCst(v) => resume((SymCst(Cst(U())), replace(st, x, v)))
                 case _  => resume((SymCst(Cst(U())), st))
             }        
         }
-        with eqI[SymStore, SymStore] {(st, d1, d2) =>
-          resume((EQ(d1, d2), st))
-        } 
-        with ltI[SymStore, SymStore] {(st, d1, d2) =>
-          resume((LT(d1, d2), st))
+        with binopI[SymStore, SymStore] {(st, op, d1, d2) =>
+            op match {
+                case EqOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 == i2))), st))
+                        case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => resume((SymCst(Cst(B(b1 == b2))), st))
+                        case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
+                        case _ => resume((EQ(d1, d2), st))
+                    }
+                case LtOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
+                        case _ => resume((LT(d1, d2), st))
+                    }
+                case GtOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 > i2))), st))
+                        case _ => resume((GT(d1, d2), st))
+                    }
+                case LeOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 <= i2))), st))
+                        case _ => resume((LE(d1, d2), st))
+                    }
+                case GeOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 >= i2))), st))
+                        case _ => resume((GE(d1, d2), st))
+                    }
+                case _ => resume((EQ(d1, d2), st))  // default for Plus/Minus
+            }
         }
-        with gtI[SymStore, SymStore] {(st, d1, d2) =>
-            resume((GT(d1, d2), st))
+        with unopI[SymStore, SymStore] {(st, op, d) =>
+            op match {
+                case NotOp() => resume((NOT(d), st))
+            }
         }
-        with leI[SymStore, SymStore] {(st, d1, d2) =>
-            resume((LE(d1, d2), st))
+        with ifI[SymStore, SymStore] {(stT, stF, g, t, f) =>
+            resume((t, stT))  // placeholder
         }
-        with geI[SymStore, SymStore] {(st, d1, d2) =>
-            resume((GE(d1, d2), st))
+        with whileI[SymStore, SymStore] {(stT, stF, g, b) =>
+            resume((g, stF))  // placeholder
+        }
+        with seqI[SymStore, SymStore] {(st1, st2, e1, e2) =>
+            resume((e2, st2))
+        }
+        with skipI[SymStore, SymStore] {(st) =>
+            resume((SymCst(Cst(U())), st))
         }
 }
 

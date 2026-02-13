@@ -36,82 +36,74 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     resume((U(), St(newState)))
   }
 
-  with plusI[Val, State[Val]] { (st, d1, d2) =>
-    (d1, d2) match {
-      case (I(i1), I(i2)) => resume((I(i1 + i2), st))
-      case (I(i1), B(i2)) =>
-        val bval = i2 match {case true => 1; case false => 0}
-        resume((I(i1 + bval), st))
-      case (B(i1), I(i2)) =>
-        val bval = i1 match {case true => 1; case false => 0}
-        resume((I(i2 + bval), st))
-      case (Str(i1), Str(i2)) => resume((Str(i1 ++ i2), st))
-      case _ => resume((U(), st))
+  with binopI[Val, State[Val]] { (st, op, d1, d2) =>
+    op match {
+      case PlusOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((I(i1 + i2), st))
+          case (I(i1), B(i2)) =>
+            val bval = i2 match {case true => 1; case false => 0}
+            resume((I(i1 + bval), st))
+          case (B(i1), I(i2)) =>
+            val bval = i1 match {case true => 1; case false => 0}
+            resume((I(i2 + bval), st))
+          case (Str(i1), Str(i2)) => resume((Str(i1 ++ i2), st))
+          case _ => resume((U(), st))
+        }
+      case MinusOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((I(i1 - i2), st))
+          case (I(i1), B(i2)) =>
+            val bval = i2 match {case true => 1; case false => 0}
+            resume((I(i1 - bval), st))
+          case (B(i1), I(i2)) =>
+            val bval = i1 match {case true => 1; case false => 0}
+            resume((I(i2 - bval), st))
+          case _ => resume((U(), st))
+        }
+      case EqOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 == i2), st))
+          case (B(b1), B(b2)) => resume((B(b1 == b2), st))
+          case (Str(s1), Str(s2)) => resume((B(s1 == s2), st))
+          case _ => resume((B(false), st))
+        }
+      case LtOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 < i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
+      case GtOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 > i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
+      case LeOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 <= i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
+      case GeOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 >= i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
     }
   }
 
-  with minusI[Val, State[Val]] { (st, d1, d2) =>
-    (d1, d2) match {
-      case (I(i1), I(i2)) => resume((I(i1 - i2), st))
-      case (I(i1), B(i2)) =>
-        val bval = i2 match {case true => 1; case false => 0}
-        resume((I(i1 - bval), st))
-      case (B(i1), I(i2)) =>
-        val bval = i1 match {case true => 1; case false => 0}
-        resume((I(i2 - bval), st))
-      case _ => resume((U(), st))
+  with unopI[Val, State[Val]] { (st, op, d) =>
+    op match {
+      case NotOp() =>
+        d match {
+          case B(true) => resume((B(false), st))
+          case B(false) => resume((B(true), st))
+          case _ => resume((U(), st))
+        }
     }
-  }
-
-  with notI[Val, State[Val]] { (st, d) =>
-    d match {
-      case B(true) => resume((B(false), st))
-      case B(false) => resume((B(true), st))
-      case _ => resume((U(), st))
-    }
-  }
-
-  with eqI[Val, State[Val]] {
-    def eqI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 == i2), st))
-        case (B(b1), B(b2)) => resume((B(b1 == b2), st))
-        case (Str(s1), Str(s2)) => resume((B(s1 == s2), st))
-        case _ => resume((B(false), st))
-      }
-  }
-
-  with ltI[Val, State[Val]] {
-    def ltI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 < i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
-  }
-  with gtI[Val, State[Val]] {
-    def gtI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 > i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
-  }
-  with leI[Val, State[Val]] {
-    def leI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 <= i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
-  }
-  with geI[Val, State[Val]] {
-    def geI(st, d1, d2) =
-      (d1, d2) match {
-        case (I(i1), I(i2)) => resume((B(i1 >= i2), st))
-        case (B(b1), B(b2)) => resume((B(false), st))
-        case _ => resume((B(false), st))
-      }
   }
 
   with ifI[Val, State[Val]] {(stT, stF, g, t, f) =>
