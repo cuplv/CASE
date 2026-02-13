@@ -53,6 +53,41 @@ effect whileE[S,P](st: S, g: Expr, b: Stmt): (P, S)
 effect seqE[S,P](st: S, e1: Stmt, e2: Stmt): (P, S)
 effect skipE[S,D](st: S): (D, S)
 
+def ifForward[S, D]
+{ prog: => (D, S) / {
+  ifE[S, Prog]
+}} : (D, S) /
+{
+  ifI[D, S]
+} =
+{
+  try {
+    prog()
+  }
+  with ifE[S,Prog] { (st, guardExpr, thenStmt, elseStmt) =>
+    val (guardVal, st1) = resume((E(guardExpr), st))
+    val (thenRes, st2) = resume((S(thenStmt), st1)) // cont
+    val (elseRes, st3) = resume((S(elseStmt), st1)) // cont
+    do ifI(st2, st3, guardVal, thenRes, elseRes)
+  }
+}
+def asgnH[S, D]
+{ prog: => (D, S) / {
+  asgnE[S, Prog]
+}} : (D, S) /
+{
+  asgnI[D, S]
+} =
+{
+  try {
+    prog()
+  }
+  with asgnE[S,Prog] { (st, x, vExpr) =>
+    val (vRes, st1) = resume((E(vExpr), st))
+    do asgnI(st1, x, vRes)
+  }
+}
+
 // unsubstantiated eval
 // if its unsubstantiated why are you substantiating it?
 def eval[D, S](prog: (Prog, S)): (D, S) /
@@ -115,6 +150,8 @@ def eval_forwards[D, S]
     skipI[D, S]
   } =
 {
+  // with ifForward[S, D] 
+  // with asgnH[S, D]
   try {
     prog()
   }
