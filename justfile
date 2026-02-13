@@ -20,9 +20,6 @@ conc_built := path_exists("./out/concrete"+os_ext)
 # is type eval built
 type_built := path_exists("./out/typecheck"+os_ext)
 
-# is symbolic eval built
-sym_built := path_exists("./out/symbolic"+os_ext)
-
 # is SMT runner built
 smt_built := path_exists("./out/symsmtrunner"+os_ext)
 
@@ -55,13 +52,10 @@ help:
   @echo '                  backend=js|llvm|chez'
   @echo 'build-type       := build typecheck evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
-  @echo 'build-sym        := build symbolic evaluator, change backend with'
-  @echo '                  backend=js|llvm|chez'
   @echo 'build-smt        := build SMT runner for symbolic evaluator'
   @echo 'run-concrete     := run concrete evaluation on given json file'
   @echo 'run-concrete-all := run concrete evaluation on all json test file and save'
   @echo 'run-type         := run type evaluation on given json file'
-  @echo 'run-sym          := run symbolic evaluation on given json file'
   @echo 'run-smt          := run SMT evaluation on given json file'
   @echo 'run-smt-all      := run SMT evaluation on all json test files'
   @echo 'parser-test-all  := run parser on JSON ast test files'
@@ -101,14 +95,6 @@ build-type:
     echo "> effekt not installed, run 'just init'"; \
   fi
 
-build-sym:
-  @if {{installed}}; then \
-    echo "> building 'symbolic.effekt'..."; \
-    {{effekt}} -b --backend={{arg}} symbolic.effekt; \
-  else \
-    echo "> effekt not installed, run 'just init'"; \
-  fi
-
 build-smt:
   @if {{installed}}; then \
     echo "> building 'symbolic/symsmtrunner.effekt'..."; \
@@ -139,18 +125,6 @@ run-type *FILE:
     ./out/typecheck{{os_ext}} pylang/tests/{{FILE}}.json; \
   else \
     echo "> type evaluation not built, run 'just build-type'"; \
-  fi
-
-run-sym *FILE:
-  @if {{sym_built}}; then \
-    echo ">"{{FILE}}".py:"; \
-    echo "---------"; \
-    cat pylang/tests/{{FILE}}.py; \
-    echo "---------\n"; \
-    echo "> end state:"; \
-    ./out/symbolic{{os_ext}} pylang/tests/{{FILE}}.json; \
-  else \
-    echo "> symbolic evaluation not built, run 'just build-sym'"; \
   fi
 
 run-smt *FILE:

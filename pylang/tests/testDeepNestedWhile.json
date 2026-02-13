@@ -1,0 +1,286 @@
+{
+  "type": "Module",
+  "body": [
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "total",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Constant",
+        "value": 0,
+        "kind": null
+      },
+      "type_comment": null
+    },
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "i",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Constant",
+        "value": 0,
+        "kind": null
+      },
+      "type_comment": null
+    },
+    {
+      "type": "While",
+      "test": {
+        "type": "Compare",
+        "left": {
+          "type": "Name",
+          "id": "i",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "ops": [
+          {
+            "type": "Lt"
+          }
+        ],
+        "comparators": [
+          {
+            "type": "Constant",
+            "value": 20,
+            "kind": null
+          }
+        ]
+      },
+      "body": [
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "j",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "Constant",
+            "value": 0,
+            "kind": null
+          },
+          "type_comment": null
+        },
+        {
+          "type": "While",
+          "test": {
+            "type": "Compare",
+            "left": {
+              "type": "Name",
+              "id": "j",
+              "ctx": {
+                "type": "Load"
+              }
+            },
+            "ops": [
+              {
+                "type": "Lt"
+              }
+            ],
+            "comparators": [
+              {
+                "type": "Constant",
+                "value": 20,
+                "kind": null
+              }
+            ]
+          },
+          "body": [
+            {
+              "type": "Assign",
+              "targets": [
+                {
+                  "type": "Name",
+                  "id": "k",
+                  "ctx": {
+                    "type": "Store"
+                  }
+                }
+              ],
+              "value": {
+                "type": "Constant",
+                "value": 0,
+                "kind": null
+              },
+              "type_comment": null
+            },
+            {
+              "type": "While",
+              "test": {
+                "type": "Compare",
+                "left": {
+                  "type": "Name",
+                  "id": "k",
+                  "ctx": {
+                    "type": "Load"
+                  }
+                },
+                "ops": [
+                  {
+                    "type": "Lt"
+                  }
+                ],
+                "comparators": [
+                  {
+                    "type": "Constant",
+                    "value": 20,
+                    "kind": null
+                  }
+                ]
+              },
+              "body": [
+                {
+                  "type": "Assign",
+                  "targets": [
+                    {
+                      "type": "Name",
+                      "id": "total",
+                      "ctx": {
+                        "type": "Store"
+                      }
+                    }
+                  ],
+                  "value": {
+                    "type": "BinOp",
+                    "left": {
+                      "type": "Name",
+                      "id": "total",
+                      "ctx": {
+                        "type": "Load"
+                      }
+                    },
+                    "op": {
+                      "type": "Add"
+                    },
+                    "right": {
+                      "type": "Constant",
+                      "value": 1,
+                      "kind": null
+                    }
+                  },
+                  "type_comment": null
+                },
+                {
+                  "type": "Assign",
+                  "targets": [
+                    {
+                      "type": "Name",
+                      "id": "k",
+                      "ctx": {
+                        "type": "Store"
+                      }
+                    }
+                  ],
+                  "value": {
+                    "type": "BinOp",
+                    "left": {
+                      "type": "Name",
+                      "id": "k",
+                      "ctx": {
+                        "type": "Load"
+                      }
+                    },
+                    "op": {
+                      "type": "Add"
+                    },
+                    "right": {
+                      "type": "Constant",
+                      "value": 1,
+                      "kind": null
+                    }
+                  },
+                  "type_comment": null
+                }
+              ],
+              "orelse": []
+            },
+            {
+              "type": "Assign",
+              "targets": [
+                {
+                  "type": "Name",
+                  "id": "j",
+                  "ctx": {
+                    "type": "Store"
+                  }
+                }
+              ],
+              "value": {
+                "type": "BinOp",
+                "left": {
+                  "type": "Name",
+                  "id": "j",
+                  "ctx": {
+                    "type": "Load"
+                  }
+                },
+                "op": {
+                  "type": "Add"
+                },
+                "right": {
+                  "type": "Constant",
+                  "value": 1,
+                  "kind": null
+                }
+              },
+              "type_comment": null
+            }
+          ],
+          "orelse": []
+        },
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "i",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "BinOp",
+            "left": {
+              "type": "Name",
+              "id": "i",
+              "ctx": {
+                "type": "Load"
+              }
+            },
+            "op": {
+              "type": "Add"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "kind": null
+            }
+          },
+          "type_comment": null
+        }
+      ],
+      "orelse": []
+    }
+  ],
+  "type_ignores": []
+}

@@ -18,26 +18,21 @@
 - `| z3 -in -smt2`
     + pipes the results into z3
 
-# Supported Python
 
-## Type Checking
+# Type Checking
 
-- Literals
-    + int
-    + bool
-    + string
-    + more complicated
-        + list
-        + tuple
-        + dictionary
+- tag unions
+- sets of potential types to determine if there is a type error
+- forwards analysis
 
-- functions (built in or not)
-    + addition
-    + concatenation
-    + subtraction
-    + multiplication
-    + compound types
-        + pop
-        + append
-        + push
-        + remove
+# Main Contributions
+
++ what have we accomplished (sofar)
+    - concrete evaluation
+    - type evaluation
+    - backward symbolic analysis
+        + outputs to smt
+    - Forwards and Backwards interpretation with the same generic eval
+    - reuse of forwards elimination handler for type and concrete
+    - end to end tool (parsing, interpretation, displaying results)
+    - good performance
