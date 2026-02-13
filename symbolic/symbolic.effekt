@@ -190,7 +190,7 @@ def simplifySym(s: SymStore): SymStore = {
 // --------------------------------------------
 // Elimination handlers for the symbolic domain
 
-def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]} : (SymStore, SymStore)/{
+def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore, Prog]} : (SymStore, SymStore)/{
     cstI[SymStore, SymStore],
     varI[SymStore, SymStore],
     asgnI[SymStore, SymStore],
@@ -209,7 +209,7 @@ def symbolicElim {prog: => (SymStore, SymStore)/Elimination[SymStore, SymStore]}
     // skipI[SymStore, SymStore]
 }= {
     try prog()
-    with Elimination[SymStore, SymStore]{
+    with Elimination[SymStore, SymStore, Prog]{
         def cstE(st, v) = {
             do cstI(st, v)
         }

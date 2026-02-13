@@ -36,21 +36,21 @@ effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
 effect recurse[D](v : D) : Bool
 
 // elimination effects
-interface Elimination[D, S] {
+interface Elimination[D, S, P] {
   def cstE(st: S, x:Val) : (D, S)
-  def varE(st: S, x: String): (Prog, S)
-  def asgnE(st: S, x: String, v: Expr): (Prog, S)
-  def plusE(st: S, e1: Expr, e2: Expr): (Prog, S)
-  def minusE(st: S, e1: Expr, e2: Expr): (Prog, S)
+  def varE(st: S, x: String): (P, S)
+  def asgnE(st: S, x: String, v: Expr): (P, S)
+  def plusE(st: S, e1: Expr, e2: Expr): (P, S)
+  def minusE(st: S, e1: Expr, e2: Expr): (P, S)
   def notE(st: S, e: Expr): (Prog, S)
-  def eqE(st: S, e1: Expr, e2: Expr): (Prog, S)
-  def ltE(st: S, e1: Expr, e2: Expr): (Prog, S)
-  def gtE(st: S, e1: Expr, e2: Expr): (Prog, S)
-  def leE(st: S, e1: Expr, e2: Expr): (Prog, S)
-  def geE(st: S, e1: Expr, e2: Expr): (Prog, S)
-  def ifE(st: S, g: Expr, t: Stmt, f: Stmt): (Prog, S)
-  def whileE(st: S, g: Expr, b: Stmt): (Prog, S)
-  def seqE(st: S, e1: Stmt, e2: Stmt): (Prog, S)
+  def eqE(st: S, e1: Expr, e2: Expr): (P, S)
+  def ltE(st: S, e1: Expr, e2: Expr): (P, S)
+  def gtE(st: S, e1: Expr, e2: Expr): (P, S)
+  def leE(st: S, e1: Expr, e2: Expr): (P, S)
+  def geE(st: S, e1: Expr, e2: Expr): (P, S)
+  def ifE(st: S, g: Expr, t: Stmt, f: Stmt): (P, S)
+  def whileE(st: S, g: Expr, b: Stmt): (P, S)
+  def seqE(st: S, e1: Stmt, e2: Stmt): (P, S)
   def skipE(st: S): (D, S)
 }
 
@@ -58,7 +58,7 @@ interface Elimination[D, S] {
 // if its unsubstantiated why are you substantiating it?
 def eval[D, S](prog: (Prog, S)): (D, S) /
   {
-    Elimination[D, S]
+    Elimination[D, S, Prog]
   } = 
   val (e, st) = prog
   e match {
@@ -84,7 +84,7 @@ def eval[D, S](prog: (Prog, S)): (D, S) /
   }
 
 def eval_forwards[D, S]
-  { prog: => (D, S) / {Elimination[D, S]} } : (D, S) /
+  { prog: => (D, S) / {Elimination[D, S, Prog]} } : (D, S) /
   {
     cstI[D, S],
     varI[D, S],
@@ -107,7 +107,7 @@ def eval_forwards[D, S]
   try {
     prog()
   }
-  with Elimination[D, S] {
+  with Elimination[D, S, Prog] {
     def cstE(st, v) = {
       do cstI(st, v)
     }
