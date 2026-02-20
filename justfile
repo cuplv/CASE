@@ -115,6 +115,18 @@ run-concrete *FILE:
     echo "> concrete evaluation not built, run 'just build-concrete'"; \
   fi
 
+comp-conc FILE:
+  echo ">"{{FILE}}".py:"; \
+  echo "---------"; \
+  cat pylang/tests/{{FILE}}.py; \
+  echo "---------"; \
+  echo "> eff conc end state:"; \
+  ./out/concrete{{os_ext}} pylang/tests/{{FILE}}.json; \
+  echo "---------"; \
+  echo "> mono conc end state:"; \
+  ./out/concmono{{os_ext}} pylang/tests/{{FILE}}.json; \
+  echo "---------"; \
+
 run-type *FILE:
   @if {{type_built}}; then \
     echo ">"{{FILE}}".py:"; \
@@ -132,11 +144,20 @@ run-smt *FILE:
     echo ">"{{FILE}}":"; \
     echo "---------"; \
     cat pylang/tests/{{FILE}}; \
-    echo "---------\n"; \
+    echo "---------"; \
     ./out/symsmtrunner{{os_ext}} pylang/tests/{{FILE}}; \
   else \
     echo "> SMT runner not built, run 'just build-smt'"; \
   fi
+
+comp-smt FILE:
+  echo ">"{{FILE}}":"; \
+  echo "------------"; \
+  cat pylang/tests/{{FILE}}; \
+  echo "----eff-----"; \
+  ./out/symsmtrunner{{os_ext}} pylang/tests/{{FILE}}; \
+  echo "----mono----"; \
+  ./out/smtmono{{os_ext}} pylang/tests/{{FILE}}; \
 
 run-concrete-all:
   @if {{conc_built}}; then \
