@@ -1,4 +1,4 @@
-module symbolic
+module symbolic/symbolic
 
 import pylang/interp
 import pylang/pyconv

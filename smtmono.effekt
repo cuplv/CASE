@@ -1,9 +1,8 @@
-module symbolic/symsmtrunner
+module smtmono
 
-import symbolic/smtlib
-import symbolic/symbolic
+import symbmono
+import smtlib
 
-import pylang/interp
 import pylang/pyconv
 import pylang/syntax
 
@@ -209,7 +208,7 @@ def main() = {
                 case Some(astJson) => {
                   // Convert the assertion AST to an Expr, then to a SymStore
                   val expr = jsonToExpr(astJson)
-                  val (v, _) = run(E(expr), defaultInit) // This is kinda a cool use of our eval to translate expr to symstore
+                  val (v, _) = eval_sym(E(expr), defaultInit) // This is kinda a cool use of our eval to translate expr to symstore
                   v
                 }
                 case None() => defaultInit
@@ -219,7 +218,7 @@ def main() = {
           }
           
           // evaluate
-          val (v, s) = run(parsed, init)
+          val (v, s) = eval_sym(parsed, init)
           // parse end state into smtlib
           val smt = symStoreToSmtScript(s)
           // print output

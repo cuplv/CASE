@@ -186,25 +186,159 @@ def simplifySym(s: SymStore): SymStore = {
     }
 }
 
-// Monolithic evaluator - no effects, all logic handled inline
+/*
+def symbolicElim {prog: => (SymStore, SymStore) / {cstE[SymStore, SymStore], varE[SymStore, Prog], asgnE[SymStore, Prog], binopE[SymStore, Prog], unopE[SymStore, Prog], ifE[SymStore, Prog], whileE[SymStore, Prog], seqE[SymStore, Prog], skipE[SymStore, SymStore]}} : (SymStore, SymStore) / {
+    cstI[SymStore, SymStore],
+    varI[SymStore, SymStore],
+    asgnI[SymStore, SymStore],
+    binopI[SymStore, SymStore],
+    unopI[SymStore, SymStore],
+    ifI[SymStore, SymStore],
+    whileI[SymStore, SymStore],
+    seqI[SymStore, SymStore],
+    skipI[SymStore, SymStore]
+} = {
+    try prog()
+    with cstE[SymStore, SymStore] { (st, v) =>
+        do cstI(st, v)
+    }
+    with varE[SymStore, Prog] { (st, x) =>
+        do varI(st, x)
+    }
+    with binopE[SymStore, Prog] { (st, op, e1, e2) =>
+        op match {
+            case PlusOp() => (SymCst(Plus(e1, e2)), st)
+            case MinusOp() => (SymCst(Minus(e1, e2)), st)
+            case EqOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, EqOp(), v1, v2)
+            case LtOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, LtOp(), v1, v2)
+            case GtOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, GtOp(), v1, v2)
+            case LeOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, LeOp(), v1, v2)
+            case GeOp() =>
+                val (v1, _) = resume((E(e1), st))
+                val (v2, _) = resume((E(e2), st))
+                do binopI(st, GeOp(), v1, v2)
+        }
+    }
+    with unopE[SymStore, Prog] { (st, op, e) =>
+        op match {
+            case NotOp() => (SymCst(Not(e)), st)
+        }
+    }
+    with asgnE[SymStore, Prog] { (st, x, v) =>
+        do asgnI(st, x, SymCst(v))
+    }
+    with ifE[SymStore, Prog] { (st, g, t, f) =>
+        val (gv, _) = resume((E(g), st))
+        val (fv, fs) = resume((S(f), st))
+        val (tv, ts) = resume((S(t), st))
+        (SymCst(Cst(U())), AND(IMP(gv, ts), IMP(NOT(gv), fs)))
+    }
+    with whileE[SymStore, Prog] { (st, g, b) =>
+        val modified:Set[String] = findModified(b, set::emptyGeneric())
+        val marked = markStore(st, modified)
+        (SymCst(Cst(U())), marked)
+    }
+    with seqE[SymStore, Prog] { (st, s1, s2) =>
+        val (_, st1) = resume((S(s2), st))
+        val (v2, st2) = resume((S(s1), st1))
+        (v2, st2)
+    }
+    with skipE[SymStore, SymStore] { (st) =>
+        (SymCst(Cst(U())), st)
+    }
+}
 
-def eval(prog: (Prog, SymStore)): (SymStore, SymStore) = {
-  val (e, st) = prog
+def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
+        try {
+            with symbolicElim()
+            eval((prog, init))
+        }
+        with cstI[SymStore, SymStore] {(st, v) =>
+            resume((SymCst(Cst(v)), st))
+        }
+        with varI[SymStore, SymStore] {(st, x) =>
+            resume((SymVar(x), st))
+        }
+        with asgnI[SymStore, SymStore] {(st, x, v) =>
+            v match {
+                case SymCst(v) => resume((SymCst(Cst(U())), replace(st, x, v)))
+                case _  => resume((SymCst(Cst(U())), st))
+            }        
+        }
+        with binopI[SymStore, SymStore] {(st, op, d1, d2) =>
+            op match {
+                case EqOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 == i2))), st))
+                        case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => resume((SymCst(Cst(B(b1 == b2))), st))
+                        case (SymCst(Cst(Str(s1))), SymCst(Cst(Str(s2)))) => resume((SymCst(Cst(B(s1 == s2))), st))
+                        case _ => resume((EQ(d1, d2), st))
+                    }
+                case LtOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 < i2))), st))
+                        case _ => resume((LT(d1, d2), st))
+                    }
+                case GtOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 > i2))), st))
+                        case _ => resume((GT(d1, d2), st))
+                    }
+                case LeOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 <= i2))), st))
+                        case _ => resume((LE(d1, d2), st))
+                    }
+                case GeOp() =>
+                    (d1, d2) match {
+                        case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => resume((SymCst(Cst(B(i1 >= i2))), st))
+                        case _ => resume((GE(d1, d2), st))
+                    }
+                case _ => resume((EQ(d1, d2), st))  // default for Plus/Minus
+            }
+        }
+        with unopI[SymStore, SymStore] {(st, op, d) =>
+            op match {
+                case NotOp() => resume((NOT(d), st))
+            }
+        }
+        with ifI[SymStore, SymStore] {(stT, stF, g, t, f) =>
+            resume((t, stT))  // placeholder
+        }
+        with whileI[SymStore, SymStore] {(stT, stF, g, b) =>
+            resume((g, stF))  // placeholder
+        }
+        with seqI[SymStore, SymStore] {(st1, st2, e1, e2) =>
+            resume((e2, st2))
+        }
+        with skipI[SymStore, SymStore] {(st) =>
+            resume((SymCst(Cst(U())), st))
+        }
+}
+*/
+
+def eval_sym(e: Prog, st: SymStore): (SymStore, SymStore) = {
   e match {
     case E(e) => e match {
       case Cst(v) => (SymCst(Cst(v)), st)
       case Var(x) => (SymVar(x), st)
-      case Plus(e1, e2) =>
-        val (v1, st1) = eval((E(e1), st))
-        val (v2, st2) = eval((E(e2), st1))
-        (SymCst(Plus(e1, e2)), st2)
-      case Minus(e1, e2) =>
-        val (v1, st1) = eval((E(e1), st))
-        val (v2, st2) = eval((E(e2), st1))
-        (SymCst(Minus(e1, e2)), st2)
+      case Plus(e1, e2) => (SymCst(Plus(e1, e2)), st)
+      case Minus(e1, e2) => (SymCst(Minus(e1, e2)), st)
       case Eq(e1, e2) =>
-        val (v1, st1) = eval((E(e1), st))
-        val (v2, st2) = eval((E(e2), st1))
+        val (v1, st1) = eval_sym(E(e1), st)
+        val (v2, st2) = eval_sym(E(e2), st1)
         (v1, v2) match {
           case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => (SymCst(Cst(B(i1 == i2))), st2)
           case (SymCst(Cst(B(b1))), SymCst(Cst(B(b2)))) => (SymCst(Cst(B(b1 == b2))), st2)
@@ -212,56 +346,57 @@ def eval(prog: (Prog, SymStore)): (SymStore, SymStore) = {
           case _ => (EQ(v1, v2), st2)
         }
       case Lt(e1, e2) =>
-        val (v1, st1) = eval((E(e1), st))
-        val (v2, st2) = eval((E(e2), st1))
+        val (v1, st1) = eval_sym(E(e1), st)
+        val (v2, st2) = eval_sym(E(e2), st1)
         (v1, v2) match {
           case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => (SymCst(Cst(B(i1 < i2))), st2)
           case _ => (LT(v1, v2), st2)
         }
       case Gt(e1, e2) =>
-        val (v1, st1) = eval((E(e1), st))
-        val (v2, st2) = eval((E(e2), st1))
+        val (v1, st1) = eval_sym(E(e1), st)
+        val (v2, st2) = eval_sym(E(e2), st1)
         (v1, v2) match {
           case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => (SymCst(Cst(B(i1 > i2))), st2)
           case _ => (GT(v1, v2), st2)
         }
       case Le(e1, e2) =>
-        val (v1, st1) = eval((E(e1), st))
-        val (v2, st2) = eval((E(e2), st1))
+        val (v1, st1) = eval_sym(E(e1), st)
+        val (v2, st2) = eval_sym(E(e2), st1)
         (v1, v2) match {
           case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => (SymCst(Cst(B(i1 <= i2))), st2)
           case _ => (LE(v1, v2), st2)
         }
       case Ge(e1, e2) =>
-        val (v1, st1) = eval((E(e1), st))
-        val (v2, st2) = eval((E(e2), st1))
+        val (v1, st1) = eval_sym(E(e1), st)
+        val (v2, st2) = eval_sym(E(e2), st1)
         (v1, v2) match {
           case (SymCst(Cst(I(i1))), SymCst(Cst(I(i2)))) => (SymCst(Cst(B(i1 >= i2))), st2)
           case _ => (GE(v1, v2), st2)
         }
       case Not(e) =>
-        val (v, st1) = eval((E(e), st))
+        val (v, st1) = eval_sym(E(e), st)
         (NOT(v), st1)
     }
     case S(stmt) => stmt match {
       case Asgn(x, e) =>
-        val (v, st1) = eval((E(e), st))
+        val (v, st1) = eval_sym(E(e), st)
         v match {
-          case SymCst(v) => (SymCst(Cst(U())), replace(st1, x, v))
-          case _ => (SymCst(Cst(U())), st1)
+          case SymCst(e) => (SymCst(Cst(U())), replace(st1, x, e))
+          case _  => ((SymCst(Cst(U())), st1))
         }
       case If(g, t, f) =>
-        val (gv, stG) = eval((E(g), st))
-        val (fv, fs) = eval((S(f), stG))
-        val (tv, ts) = eval((S(t), stG))
+        val (gv, _) = eval_sym(E(g), st)
+        val (fv, fs) = eval_sym(S(f), st)
+        val (tv, ts) = eval_sym(S(t), st)
         (SymCst(Cst(U())), AND(IMP(gv, ts), IMP(NOT(gv), fs)))
       case While(g, b) =>
         val modified:Set[String] = findModified(b, set::emptyGeneric())
         val marked = markStore(st, modified)
         (SymCst(Cst(U())), marked)
       case Seq(s1, s2) =>
-        val (_, st1) = eval((S(s1), st))
-        eval((S(s2), st1))
+        val (_, st1) = eval_sym(S(s2), st)
+        val (v2, st2) = eval_sym(S(s1), st1)
+        (v2, st2)
       case Skip() => (SymCst(Cst(U())), st)
     }
   }
@@ -287,7 +422,7 @@ def main() = {
           // parse to Prog
           val parsed = pythonAstToProg(jsonVal)
           // evaluate
-          val (v, s) = eval((parsed, defaultInit))
+          val (v, s) = eval_sym(parsed, defaultInit)
           // extract end state
           
           // print output

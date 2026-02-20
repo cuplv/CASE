@@ -1,6 +1,6 @@
-module symbolic/smtlib
+module smtlib
 
-import symbolic/symbolic
+import symbmono
 import pylang/syntax
 import set
 
