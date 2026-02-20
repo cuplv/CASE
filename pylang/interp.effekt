@@ -41,6 +41,7 @@ effect skipI[D, S](st: S): (D, S)
 effect assume[D](st: State[D], guard: D, e: D): (D, State[D])
 effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
 effect recurse[D](v : D) : Bool
+effect widen[D,S](g: D, st: S, st1: S): Bool
 
 // elimination effects
 effect cstE[D,S](st: S, x:Val) : (D, S)
