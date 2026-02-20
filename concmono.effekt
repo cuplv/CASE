@@ -1,0 +1,155 @@
+module concmono
+
+import pylang/pyconv
+import pylang/syntax
+
+import args
+import io/error
+import io/filesystem
+import json
+import map
+import scanner
+
+type State[D] {
+  St(st: Map[String, D])
+}
+
+def eval(prog: (Prog, State[Val])): (Val, State[Val]) = {
+  val (e, st) = prog
+  e match {
+    case E(e) => e match  {
+      case Cst(v) => (v, st)
+      case Plus(e1, e2) => 
+        val (v1, st1) = eval((E(e1), st))
+        val (v2, st2) = eval((E(e2), st1))
+        (v1, v2) match {
+          case (I(i1), I(i2)) => (I(i1 + i2), st2)
+          case (I(i1), B(b)) => val bval = if (b) 1 else 0; (I(i1 + bval), st2)
+          case (B(b), I(i2)) => val bval = if (b) 1 else 0; (I(i2 + bval), st2)
+          case (Str(s1), Str(s2)) => (Str(s1 ++ s2), st2)
+          case _ => (U(), st2)
+        }
+      case Minus(e1, e2) =>
+        val (v1, st1) = eval((E(e1), st))
+        val (v2, st2) = eval((E(e2), st1))
+        (v1, v2) match {
+          case (I(i1), I(i2)) => (I(i1 - i2), st2)
+          case (I(i1), B(b)) => val bval = if (b) 1 else 0; (I(i1 - bval), st2)
+          case (B(b), I(i2)) => val bval = if (b) 1 else 0; (I(i2 - bval), st2)
+          case _ => (U(), st2)
+        }
+      case Eq(e1, e2) =>
+        val (v1, st1) = eval((E(e1), st))
+        val (v2, st2) = eval((E(e2), st1))
+        (v1, v2) match {
+          case (I(i1), I(i2)) => (B(i1 == i2), st2)
+          case (B(b1), B(b2)) => (B(b1 == b2), st2)
+          case (Str(s1), Str(s2)) => (B(s1 == s2), st2)
+          case _ => (B(false), st2)
+        }
+      case Lt(e1, e2) =>
+        val (v1, st1) = eval((E(e1), st))
+        val (v2, st2) = eval((E(e2), st1))
+        (v1, v2) match {
+          case (I(i1), I(i2)) => (B(i1 < i2), st2)
+          case _ => (B(false), st2)
+        }
+      case Gt(e1, e2) =>
+        val (v1, st1) = eval((E(e1), st))
+        val (v2, st2) = eval((E(e2), st1))
+        (v1, v2) match {
+          case (I(i1), I(i2)) => (B(i1 > i2), st2)
+          case _ => (B(false), st2)
+        }
+      case Le(e1, e2) =>
+        val (v1, st1) = eval((E(e1), st))
+        val (v2, st2) = eval((E(e2), st1))
+        (v1, v2) match {
+          case (I(i1), I(i2)) => (B(i1 <= i2), st2)
+          case _ => (B(false), st2)
+        }
+      case Ge(e1, e2) =>
+        val (v1, st1) = eval((E(e1), st))
+        val (v2, st2) = eval((E(e2), st1))
+        (v1, v2) match {
+          case (I(i1), I(i2)) => (B(i1 >= i2), st2)
+          case _ => (B(false), st2)
+        }
+      case Not(e) =>
+        val (v, st1) = eval((E(e), st))
+        v match {
+          case B(true) => (B(false), st1)
+          case B(false) => (B(true), st1)
+          case _ => (U(), st1)
+        }
+      case Var(x) =>
+        val m: Map[String, Val] = st match {case St(a) => a}
+        val v = map::get[String,Val](m, x) match {
+          case Some(i) => i
+          case None() => U()
+        }
+        (v, st)
+    }
+    case S(stmt) => stmt match {
+      case Asgn(x, e) =>
+        val (v, st1) = eval((E(e), st))
+        val m = st1 match {case St(a) => a}
+        val newState = m.put(x, v)
+        (U(), St(newState))
+      case If(g, t, f) =>
+        val (gv, stG) = eval((E(g), st))
+        gv match {
+          case B(true) => eval((S(t), stG))
+          case B(false) => eval((S(f), stG))
+          case _ => (U(), stG)
+        }
+      case While(g, b) =>
+        val (gv, stG) = eval((E(g), st))
+        gv match {
+          case B(true) => 
+            val (_, stB) = eval((S(b), stG))
+            eval((S(While(g, b)), stB))
+          case B(false) => (U(), stG)
+          case _ => (U(), stG)
+        }
+      case Seq(s1, s2) =>
+        val (_, st1) = eval((S(s1), st))
+        eval((S(s2), st1))
+      case Skip() => (U(), st)
+    }
+  }
+}
+
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val init: Map[String, Val] = map::empty(box compareStringBytes)
+
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        // read json ast
+        val jsonFile: String = filesystem::readFile(f)
+        feed(jsonFile) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          // evaluate
+          val (_, s) = eval((parsed, St(init)))
+          // extract end state
+          val m = s match {case St(a) => a}
+          // print output
+          println("---------")
+          m.foreach { (k,v) => println(k); println(v)}
+          println("---------")
+        }
+      }
+    }
+    case Nil() => println("no file passed in")
+  }
+}
