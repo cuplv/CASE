@@ -105,7 +105,7 @@ def eval[D, S](prog: (Prog, S)): (D, S) /
   } = 
   val (e, st) = prog
   e match {
-    case E(e) => e match  {
+    case E(e) => e match {
       case Cst(v) => do cstE(st, v)
       case Plus(e1, e2) => eval(do binopE(st, PlusOp(), e1, e2))
       case Minus(e1, e2) => eval(do binopE(st, MinusOp(), e1, e2))

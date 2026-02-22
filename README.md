@@ -45,6 +45,19 @@
     - for SOAP it seems like we want to show this is **viable**
         + this isn't **theoretical theatre** it is the foundations of what could become a large framework for analysis
 
+## Contribution Bullets
+
+- implement he ideas of CAS to produce several analyses for the same source language, with one evaluation function and set of effects
+- demonstrate increased reusability of semantic fragments accross analyses
+- Show the performance of effect oriented CAS framework is not a bottleneck
+
+or
+
+- We present a CAS framework, leveraging algebraic effect handlers to decouple AST traversal, control flow, and domain semantics, enabling modular reuse across interpreters without monad transformers.
+- We refactor a monolithic interpreter for a small imperative language into CAS style, reusing one generic effectful evaluation function for both concrete forward and backward symbolic analyses.
+- Shared elimination handlers for forward control flow reduces code duplication for new, forward analyses by roughly 50% compared to separate monolithic implementations.
+- Evaluation on programs with 1M loop iterations shows a 34% overhead compared with monolithic baselines, demonstrating CAS as a practical toolkit.
+
 # Related Works
 
 - we have a good 1/4 page on **effect based interpretation**
