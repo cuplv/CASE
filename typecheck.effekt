@@ -198,11 +198,11 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
   }
 
   with recurse[Set[Type]] {(ts) =>
-    val shouldRecurse = ts.any { t => t match {
-      case TBool() => false
-      case _ => false
-    }}
-    resume(shouldRecurse)
+    resume(false)
+  }
+
+  with branch[Set[Type]] {(ts) =>
+    resume(-1)
   }
 
   with seqI[Set[Type], State[Set[Type]]] {(_, st2, _, ts2) => resume((ts2, st2))}

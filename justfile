@@ -71,6 +71,8 @@ check:
   @echo "> checking z3..."
   @echo '{{z3_exe}}'
 
+list-tests:
+  @ls pylang/tests/*.py
 
 init:
   npm i @effekt-lang/effekt

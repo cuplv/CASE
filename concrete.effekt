@@ -129,6 +129,14 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
   }
 
+  with branch[Val] {(v) =>
+    v match {
+      case B(true) => resume(1)
+      case B(false) => resume(0)
+      case _ => resume(-1)
+    }
+  }
+
   with seqI[Val, State[Val]] {(_, st2, _, v2) => resume((v2, st2))}
 
   with skipI[Val, State[Val]] {(st) => resume((U(), st))}

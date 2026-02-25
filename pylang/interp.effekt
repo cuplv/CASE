@@ -42,6 +42,7 @@ effect assume[D](st: State[D], guard: D, e: D): (D, State[D])
 effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
 effect recurse[D](v : D) : Bool
 effect widen[D,S](g: D, st: S, st1: S): Bool
+effect branch[D](v: D): Int
 
 // elimination effects
 effect cstE[D,S](st: S, x:Val) : (D, S)
@@ -147,6 +148,7 @@ def eval_forwards[D, S]
     ifI[D, S],
     whileI[D, S],
     recurse[D],
+    branch[D],
     seqI[D, S],
     skipI[D, S]
   } =
@@ -181,9 +183,21 @@ def eval_forwards[D, S]
 
   with ifE[S,Prog] { (st, guardExpr, thenStmt, elseStmt) =>
     val (guardVal, st1) = resume((E(guardExpr), st))
-    val (thenRes, st2) = resume((S(thenStmt), st1)) // cont
-    val (elseRes, st3) = resume((S(elseStmt), st1)) // cont
-    do ifI(st2, st3, guardVal, thenRes, elseRes)
+    do branch(guardVal) match {
+      case 1 => { // only then branch
+        val (thenRes, st2) = resume((S(thenStmt), st1)) // cont
+        do ifI(st2, st2, guardVal, thenRes, thenRes)
+      }
+      case 0 => { // only else branch
+        val (elseRes, st3) = resume((S(elseStmt), st1)) // cont
+        do ifI(st1, st3, guardVal, elseRes, elseRes)
+      }
+      case _ => { // both branches
+        val (thenRes, st2) = resume((S(thenStmt), st1)) // cont
+        val (elseRes, st3) = resume((S(elseStmt), st1)) // cont
+        do ifI(st2, st3, guardVal, thenRes, elseRes)
+      }
+    }
   }
 
   with whileE[S,Prog] { (st, guardExpr, bodyStmt) =>
