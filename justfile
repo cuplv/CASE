@@ -47,6 +47,7 @@ help:
   @echo 'check            := check required dependencies'
   @echo 'init             := install `effekt` language'
   @echo 'clean            := remove build/output artifacts'
+  @echo 'list-tests       := list files to run with just'
   @echo 'build-json       := build json ast of python test files'
   @echo 'build-concrete   := build concrete evaluator, change backend with'
   @echo '                  backend=js|llvm|chez'
