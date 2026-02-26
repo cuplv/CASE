@@ -13,6 +13,22 @@
     - for chez scheme builds *(mix of portability and performance)*
         - `effekt --backend chez-callcc <analysis>.effekt`
 
+## Docker
+
+- if you want to build with docker running the following commands will put our interpreters in the `./out/` directory where they can be executed from the command line
+    + `./out/concrete <file.json>`
+        + the json files are python asts build with `./astDump.py`
+    + `./out/symsmtrunner <file.py>`
+        + requires python3 and z3 installed locally
+- the docker commands to build the interpreters
+
+```sh
+# build container which installs effekt
+docker build -t build .
+# build interpreters and put them in ./out/
+docker run --rm -v $(pwd)/out:/app/out build
+```
+
 # passing results to z3
 
 - `| z3 -in -smt2`
