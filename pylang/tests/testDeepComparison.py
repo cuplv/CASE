@@ -8,3 +8,5 @@ while i < 500:
                     if i >= i:
                         count = count + 1
     i = i + 1
+
+#i==1

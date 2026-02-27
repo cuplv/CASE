@@ -131,6 +131,25 @@ just run-concrete testIfType
 Demo
 ===
 
+```py
+x = 0
+
+while x < 1_000_000:
+    x = x + 1
+
+if x == 1_000_000:
+    x = True
+```
+
+```bash +exec
+time ../out/concrete ../pylang/tests/testPerf.json
+```
+
+<!-- end_slide -->
+
+Demo
+===
+
 ```scala
 def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]])
 = {
@@ -151,6 +170,32 @@ Demo
 
 ```bash +exec
 just run-type testIfTypeError
+```
+
+<!-- end_slide -->
+
+Demo
+===
+
+```scala
+def run(prog:Prog, init: SymStore) : (SymStore, SymStore) = {
+  try {
+    with symbolicElim()
+    eval((prog, init))
+  }
+```
+
+```bash +exec
+just run-smt testDeepIf.py
+```
+
+<!-- end_slide -->
+
+Demo
+===
+
+```bash +exec
+just run-smt testAssgnx_2.py
 ```
 
 <!-- end_slide -->

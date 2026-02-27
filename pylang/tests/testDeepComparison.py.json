@@ -1,0 +1,329 @@
+{
+  "type": "Module",
+  "body": [
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "count",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Constant",
+        "value": 0,
+        "kind": null
+      },
+      "type_comment": null
+    },
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "i",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Constant",
+        "value": 0,
+        "kind": null
+      },
+      "type_comment": null
+    },
+    {
+      "type": "While",
+      "test": {
+        "type": "Compare",
+        "left": {
+          "type": "Name",
+          "id": "i",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "ops": [
+          {
+            "type": "Lt"
+          }
+        ],
+        "comparators": [
+          {
+            "type": "Constant",
+            "value": 500,
+            "kind": null
+          }
+        ]
+      },
+      "body": [
+        {
+          "type": "If",
+          "test": {
+            "type": "Compare",
+            "left": {
+              "type": "Name",
+              "id": "i",
+              "ctx": {
+                "type": "Load"
+              }
+            },
+            "ops": [
+              {
+                "type": "Eq"
+              }
+            ],
+            "comparators": [
+              {
+                "type": "Name",
+                "id": "i",
+                "ctx": {
+                  "type": "Load"
+                }
+              }
+            ]
+          },
+          "body": [
+            {
+              "type": "If",
+              "test": {
+                "type": "Compare",
+                "left": {
+                  "type": "Name",
+                  "id": "i",
+                  "ctx": {
+                    "type": "Load"
+                  }
+                },
+                "ops": [
+                  {
+                    "type": "Lt"
+                  }
+                ],
+                "comparators": [
+                  {
+                    "type": "BinOp",
+                    "left": {
+                      "type": "Name",
+                      "id": "i",
+                      "ctx": {
+                        "type": "Load"
+                      }
+                    },
+                    "op": {
+                      "type": "Add"
+                    },
+                    "right": {
+                      "type": "Constant",
+                      "value": 1,
+                      "kind": null
+                    }
+                  }
+                ]
+              },
+              "body": [
+                {
+                  "type": "If",
+                  "test": {
+                    "type": "Compare",
+                    "left": {
+                      "type": "Name",
+                      "id": "i",
+                      "ctx": {
+                        "type": "Load"
+                      }
+                    },
+                    "ops": [
+                      {
+                        "type": "LtE"
+                      }
+                    ],
+                    "comparators": [
+                      {
+                        "type": "Name",
+                        "id": "i",
+                        "ctx": {
+                          "type": "Load"
+                        }
+                      }
+                    ]
+                  },
+                  "body": [
+                    {
+                      "type": "If",
+                      "test": {
+                        "type": "Compare",
+                        "left": {
+                          "type": "BinOp",
+                          "left": {
+                            "type": "Name",
+                            "id": "i",
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          },
+                          "op": {
+                            "type": "Add"
+                          },
+                          "right": {
+                            "type": "Constant",
+                            "value": 1,
+                            "kind": null
+                          }
+                        },
+                        "ops": [
+                          {
+                            "type": "Gt"
+                          }
+                        ],
+                        "comparators": [
+                          {
+                            "type": "Name",
+                            "id": "i",
+                            "ctx": {
+                              "type": "Load"
+                            }
+                          }
+                        ]
+                      },
+                      "body": [
+                        {
+                          "type": "If",
+                          "test": {
+                            "type": "Compare",
+                            "left": {
+                              "type": "Name",
+                              "id": "i",
+                              "ctx": {
+                                "type": "Load"
+                              }
+                            },
+                            "ops": [
+                              {
+                                "type": "GtE"
+                              }
+                            ],
+                            "comparators": [
+                              {
+                                "type": "Name",
+                                "id": "i",
+                                "ctx": {
+                                  "type": "Load"
+                                }
+                              }
+                            ]
+                          },
+                          "body": [
+                            {
+                              "type": "Assign",
+                              "targets": [
+                                {
+                                  "type": "Name",
+                                  "id": "count",
+                                  "ctx": {
+                                    "type": "Store"
+                                  }
+                                }
+                              ],
+                              "value": {
+                                "type": "BinOp",
+                                "left": {
+                                  "type": "Name",
+                                  "id": "count",
+                                  "ctx": {
+                                    "type": "Load"
+                                  }
+                                },
+                                "op": {
+                                  "type": "Add"
+                                },
+                                "right": {
+                                  "type": "Constant",
+                                  "value": 1,
+                                  "kind": null
+                                }
+                              },
+                              "type_comment": null
+                            }
+                          ],
+                          "orelse": []
+                        }
+                      ],
+                      "orelse": []
+                    }
+                  ],
+                  "orelse": []
+                }
+              ],
+              "orelse": []
+            }
+          ],
+          "orelse": []
+        },
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "i",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "BinOp",
+            "left": {
+              "type": "Name",
+              "id": "i",
+              "ctx": {
+                "type": "Load"
+              }
+            },
+            "op": {
+              "type": "Add"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "kind": null
+            }
+          },
+          "type_comment": null
+        }
+      ],
+      "orelse": []
+    }
+  ],
+  "type_ignores": [],
+  "assertion": {
+    "string": "i==1",
+    "ast": {
+      "type": "Compare",
+      "left": {
+        "type": "Name",
+        "id": "i",
+        "ctx": {
+          "type": "Load"
+        }
+      },
+      "ops": [
+        {
+          "type": "Eq"
+        }
+      ],
+      "comparators": [
+        {
+          "type": "Constant",
+          "value": 1,
+          "kind": null
+        }
+      ]
+    }
+  }
+}
