@@ -75,7 +75,6 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     with eval_forwards[Set[Type], State[Set[Type]]]
     eval((prog, init))
   }
-
   with cstI[Set[Type], State[Set[Type]]] {(st, v) => 
     val ts = v match {
       case I(_) => [TInt()]
@@ -85,7 +84,6 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     }
     resume((set::fromListGeneric(ts), st))
   }
-
   with varI[Set[Type], State[Set[Type]]] { (st, x) =>
     val m: Map[String, Set[Type]] = st match {case St(a) => a}
     val ts = map::get[String, Set[Type]](m, x) match {
@@ -94,13 +92,11 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     }
     resume((ts, st))
   }
-
   with asgnI[Set[Type], State[Set[Type]]] { (st, x, ts) =>
     val m = st match {case St(a) => a}
     val newState = m.put(x, ts)
     resume((set::fromListGeneric([TUnit()]), St(newState)))
   }
-
   with binopI[Set[Type], State[Set[Type]]] { (st, op, ts1, ts2) =>
     op match {
       case PlusOp() =>
@@ -170,7 +166,6 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
         resume((set::fromListGeneric(result), st))
     }
   }
-
   with unopI[Set[Type], State[Set[Type]]] { (st, op, ts) =>
     op match {
       case NotOp() =>
@@ -185,28 +180,22 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
         resume((set::fromListGeneric(result), st))
     }
   }
-
   with ifI[Set[Type], State[Set[Type]]] {(stT, stF, ts, tsT, tsF) =>
     val result: Set[Type] = set::union(tsT, tsF)
     val merged = mergeStates(stT, stF)
     resume((result, merged))
   }
-
   with whileI[Set[Type], State[Set[Type]]] {(stG, stB, ts, tsB) =>
     val merged = mergeStates(stG, stB)
     resume((set::fromListGeneric([TUnit()]), merged))
   }
-
   with recurse[Set[Type]] {(ts) =>
     resume(false)
   }
-
   with branch[Set[Type]] {(ts) =>
     resume(-1)
   }
-
   with seqI[Set[Type], State[Set[Type]]] {(_, st2, _, ts2) => resume((ts2, st2))}
-
   with skipI[Set[Type], State[Set[Type]]] {(st) => resume((set::fromListGeneric([TUnit()]), st))}
 }
 

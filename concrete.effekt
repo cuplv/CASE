@@ -16,11 +16,9 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     with eval_forwards[Val, State[Val]]
     eval((prog, init))
   }
-
   with cstI[Val, State[Val]] {(st, v) => 
     resume((v, st))
   }
-
   with varI[Val, State[Val]] { (st, x) =>
     val m: Map[String, Val] = st match {case St(a) => a}
     val v = map::get[String,Val](m, x) match {
@@ -29,13 +27,11 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
     }
     resume((v, st))
   }
-
   with asgnI[Val, State[Val]] { (st, x, v) =>
     val m = st match {case St(a) => a}
     val newState = m.put(x, v)
     resume((U(), St(newState)))
   }
-
   with binopI[Val, State[Val]] { (st, op, d1, d2) =>
     op match {
       case PlusOp() =>
@@ -94,7 +90,6 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
         }
     }
   }
-
   with unopI[Val, State[Val]] { (st, op, d) =>
     op match {
       case NotOp() =>
@@ -105,7 +100,6 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
         }
     }
   }
-
   with ifI[Val, State[Val]] {(stT, stF, g, t, f) =>
     g match {
       case B(true) => resume((t, stT))
@@ -113,7 +107,6 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
       case _ => resume((U(), stF))
     }
   }
-
   with whileI[Val, State[Val]] {(stG, stB, g, b) =>
     g match {
       case B(true) => resume((g, stB))
@@ -121,14 +114,12 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
       case _ => resume((U(), stG))
     }
   }
-
   with recurse[Val] {(v) =>
     v match {
       case B(true) => resume(true)
       case _ => resume(false)
     }
   }
-
   with branch[Val] {(v) =>
     v match {
       case B(true) => resume(1)
@@ -136,9 +127,7 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
       case _ => resume(-1)
     }
   }
-
   with seqI[Val, State[Val]] {(_, st2, _, v2) => resume((v2, st2))}
-
   with skipI[Val, State[Val]] {(st) => resume((U(), st))}
 }
 
