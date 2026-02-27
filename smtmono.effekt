@@ -6,7 +6,6 @@ import smtlib
 import pylang/pyconv
 import pylang/syntax
 
-
 import args
 import io/error
 import io/filesystem
