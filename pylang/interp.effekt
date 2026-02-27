@@ -1,0 +1,177 @@
+module pylang/interp
+
+import pylang/syntax
+import pylang/pyconv
+
+import io/error
+import io/filesystem
+import json
+import map
+import scanner
+
+type State[D] {
+  St(st: Map[String, D])
+}
+
+type BinOp {
+  PlusOp()
+  MinusOp()
+  EqOp()
+  LtOp()
+  GtOp()
+  LeOp()
+  GeOp()
+}
+
+type UnOp {
+  NotOp()
+}
+
+// introduction effects
+effect cstI[D, S](st: S, v: Val): (D, S) 
+effect varI[D, S](st: S, e1: String): (D, S)
+effect asgnI[D, S](st: S, x: String, v: D): (D, S)
+effect binopI[D, S](st: S, op: BinOp, d1: D, d2: D): (D, S)
+effect unopI[D, S](st: S, op: UnOp, e: D): (D, S)
+effect ifI[D, S](stT: S, stF: S, g: D, t: D, f: D): (D, S)
+effect whileI[D, S](stT: S, stF: S, g: D, b: D): (D, S)
+effect seqI[D, S](st1: S, st2: S, e1: D, e2: D): (D, S)
+effect skipI[D, S](st: S): (D, S)
+// lowering effects
+effect assume[D](st: State[D], guard: D, e: D): (D, State[D])
+effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
+effect recurse[D](v : D) : Bool
+effect widen[D,S](g: D, st: S, st1: S): Bool
+effect branch[D](v: D): Int
+
+// elimination effects
+effect cstE[D,S](st: S, x:Val) : (D, S)
+effect varE[S,P](st: S, x: String): (P, S)
+effect asgnE[S,P](st: S, x: String, v: Expr): (P, S)
+effect binopE[S,P](st: S, op: BinOp, e1: Expr, e2: Expr): (P, S)
+effect unopE[S,P](st: S, op: UnOp, e: Expr): (P, S)
+effect ifE[S,P](st: S, g: Expr, t: Stmt, f: Stmt): (P, S)
+effect whileE[S,P](st: S, g: Expr, b: Stmt): (P, S)
+effect seqE[S,P](st: S, e1: Stmt, e2: Stmt): (P, S)
+effect skipE[S,D](st: S): (D, S)
+
+def eval[D, S](prog: (Prog, S)): (D, S) /
+  {
+    cstE[D, S],
+    varE[S,Prog],
+    asgnE[S,Prog],
+    binopE[S,Prog],
+    unopE[S,Prog],
+    ifE[S,Prog],
+    whileE[S,Prog],
+    seqE[S,Prog],
+    skipE[S,D]
+  } = 
+  val (e, st) = prog
+  e match {
+    case E(e) => e match {
+      case Cst(v) => do cstE(st, v)
+      case Plus(e1, e2) => eval(do binopE(st, PlusOp(), e1, e2))
+      case Minus(e1, e2) => eval(do binopE(st, MinusOp(), e1, e2))
+      case Not(e) => eval(do unopE(st, NotOp(), e))
+      case Eq(e1, e2) => eval(do binopE(st, EqOp(), e1, e2))
+      case Lt(e1, e2) => eval(do binopE(st, LtOp(), e1, e2))
+      case Gt(e1, e2) => eval(do binopE(st, GtOp(), e1, e2))
+      case Le(e1, e2) => eval(do binopE(st, LeOp(), e1, e2))
+      case Ge(e1, e2) => eval(do binopE(st, GeOp(), e1, e2))
+      case Var(x) => eval(do varE(st,x))
+    }
+    case S(stmt) => stmt match {
+      case Asgn(x, v) => eval(do asgnE(st, x,v))
+      case If(g, t, f) => eval(do ifE(st, g,t,f))
+      case While(g, b) => eval(do whileE(st, g, b))
+      case Seq(e1, e2) => eval(do seqE(st, e1, e2))
+      case Skip() => do skipE(st) // skip just returns (Unit, State)
+    }
+  }
+def eval_forwards[D, S]
+  { prog: => (D, S) / {
+    cstE[D, S],
+    varE[S,Prog],
+    asgnE[S,Prog],
+    binopE[S,Prog],
+    unopE[S,Prog],
+    ifE[S,Prog],
+    whileE[S,Prog],
+    seqE[S,Prog],
+    skipE[S,D]
+  }} : (D, S) /
+  {
+    cstI[D, S],
+    varI[D, S],
+    asgnI[D, S],
+    binopI[D, S],
+    unopI[D, S],
+    ifI[D, S],
+    whileI[D, S],
+    recurse[D],
+    branch[D],
+    seqI[D, S],
+    skipI[D, S]
+  } =
+{
+  // with ifForward[S, D] 
+  // with asgnH[S, D]
+  try {
+    prog()
+  }
+  with cstE[D, S] { (st, v) =>
+      do cstI(st, v)
+  }
+  with varE[S,Prog] { (st, x) =>
+      do varI(st, x)
+    }
+  with asgnE[S,Prog] { (st, x, vExpr) =>
+    val (vRes, st1) = resume((E(vExpr), st))
+    do asgnI(st1, x, vRes)
+  }
+  with binopE[S,Prog] { (st, op, e1, e2) =>
+    val (v1, st1) = resume((E(e1), st))
+    val (v2, st2) = resume((E(e2), st1))
+    do binopI(st2, op, v1, v2)
+  }
+  with unopE[S,Prog] { (st, op, e) =>
+    val (v, st1) = resume((E(e), st))
+    do unopI(st1, op, v)
+  }
+  with ifE[S,Prog] { (st, guardExpr, thenStmt, elseStmt) =>
+    val (guardVal, st1) = resume((E(guardExpr), st))
+    do branch(guardVal) match {
+      case 1 => { // only then branch
+        val (thenRes, st2) = resume((S(thenStmt), st1)) // cont
+        do ifI(st2, st2, guardVal, thenRes, thenRes)
+      }
+      case 0 => { // only else branch
+        val (elseRes, st3) = resume((S(elseStmt), st1)) // cont
+        do ifI(st1, st3, guardVal, elseRes, elseRes)
+      }
+      case _ => { // both branches
+        val (thenRes, st2) = resume((S(thenStmt), st1)) // cont
+        val (elseRes, st3) = resume((S(elseStmt), st1)) // cont
+        do ifI(st2, st3, guardVal, thenRes, elseRes)
+      }
+    }
+  }
+  with whileE[S,Prog] { (st, guardExpr, bodyStmt) =>
+    val (guardVal, st1) = resume((E(guardExpr), st))
+    val (bodyVal, st2) = resume((S(bodyStmt), st1))
+    val (wV, wS) = do whileI(st1, st2, guardVal, bodyVal)
+    do recurse(wV) match { // *does this break cumulativity...
+      case true => resume((S(While(guardExpr, bodyStmt)), wS))
+      case _ => resume((E(Cst(U())), st1))
+    }
+  }
+  with seqE[S,Prog] { (st, s1, s2) =>
+    val (v1, st1) = resume((S(s1), st))
+    val (v2, st2) = resume((S(s2), st1))
+    do seqI(st1, st2, v1, v2)
+  }
+  with skipE[S,D] { (st) =>
+    do skipI(st)
+  }
+}

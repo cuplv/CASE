@@ -1,0 +1,237 @@
+module smtmono
+
+import symbmono
+import smtlib
+
+import pylang/pyconv
+import pylang/syntax
+
+import args
+import io/error
+import io/filesystem
+import json
+import map
+import scanner
+
+extern def genJson(file: String): String =
+  jsNode """(function () {
+    const { spawnSync } = require('child_process');
+    try {
+      const result = spawnSync('python3', ['astDump.py', '-f', ${file}], {
+        encoding: 'utf-8'
+      });
+      return result.stdout || result.stderr
+    } catch (err) {
+        return err.message
+    }
+  })()
+  """
+
+extern def runZ3(smt: String): String =
+  jsNode """(function () {
+    const { spawnSync } = require('child_process');
+    try {
+      const result = spawnSync('z3', ['-in', '-smt2'], {
+        input: ${smt},
+        encoding: 'utf-8'
+      });
+      return result.stdout || result.stderr
+    } catch (err) {
+        return err.message
+    }
+  })()
+  """
+
+def tryGetAssertionFromJson(jsonVal: JsonValue): Option[JsonValue] = {
+  // Try to extract "assertion" field from JSON object
+  // Returns the assertion object (which has 'ast' field) if found, None otherwise
+  jsonVal match {
+    case Dict(fields) =>
+      fields.filter { case (k, _) => k == "assertion" }.headOption() match {
+        case Some((_, v)) => Some(v)
+        case _ => None()
+      }
+    case _ => None()
+  }
+}
+
+def getAssertionAst(assertionObj: JsonValue): Option[JsonValue] = {
+  // Extract the 'ast' field from the assertion object
+  assertionObj match {
+    case Dict(fields) =>
+      fields.filter { case (k, _) => k == "ast" }.headOption() match {
+        case Some((_, v)) => Some(v)
+        case _ => None()
+      }
+    case _ => None()
+  }
+}
+
+def jsonToExpr(v: JsonValue): Expr = v match {
+  case Number(n) => Cst(I(n.toInt))
+  case Bool(b) => Cst(B(b))
+  case Null() => Cst(U())
+  case String(s) => Var(s)
+  case List(_) => Cst(U())
+  case Dict(els) => 
+    val exprType = els.filter { case (k, _) => k == "type" }.headOption() match {
+      case Some((_, String(t))) => t
+      case _ => "Unknown"
+    }
+    val fields = els
+    (exprType match {
+      case "Compare" =>
+        parseCompare(fields)
+      case "BinOp" =>
+        parseBinOp(fields)
+      case "UnaryOp" =>
+        parseUnaryOp(fields)
+      case "Constant" =>
+        parseConstant(fields)
+      case "Name" =>
+        parseName(fields)
+      case _ => Cst(U())
+    })
+  // case _ => Cst(U())
+}
+
+def getField(name: String, fields: List[(String, JsonValue)]): JsonValue = 
+  fields.filter { case (k, _) => k == name }.headOption() match {
+    case Some((_, v)) => v
+    case None() => Null()
+  }
+
+
+def parseCompare(fields: List[(String, JsonValue)]): Expr = {
+  val left = jsonToExpr(getField("left", fields))
+  getField("comparators", fields) match {
+    case List(comparators) =>
+      comparators.headOption() match {
+        case Some(cmpRight) =>
+          val right = jsonToExpr(cmpRight)
+          getField("ops", fields) match {
+            case List(ops) =>
+              ops.headOption() match {
+                case Some(op) =>
+                  op match {
+                    case Dict(opFields) =>
+                      opFields.filter { case (k, _) => k == "type" }.headOption() match {
+                        case Some((_, String("Lt"))) => Lt(left, right)
+                        case Some((_, String("Gt"))) => Gt(left, right)
+                        case Some((_, String("Eq"))) => Eq(left, right)
+                        case Some((_, String("LtE"))) => Le(left, right)
+                        case Some((_, String("GtE"))) => Ge(left, right)
+                        case _ => Cst(U())
+                      }
+                    case _ => Cst(U())
+                  }
+                case None() => Cst(U())
+              }
+            case _ => Cst(U())
+          }
+        case None() => Cst(U())
+      }
+    case _ => Cst(U())
+  }
+}
+
+def parseBinOp(fields: List[(String, JsonValue)]): Expr = {
+  val left = jsonToExpr(getField("left", fields))
+  val right = jsonToExpr(getField("right", fields))
+  getField("op", fields) match {
+    case Dict(opFields) =>
+      opFields.filter { case (k, _) => k == "type" }.headOption() match {
+        case Some((_, String("Add"))) => Plus(left, right)
+        case Some((_, String("Sub"))) => Minus(left, right)
+        case _ => Cst(U())
+      }
+    case _ => Cst(U())
+  }
+}
+
+def parseUnaryOp(fields: List[(String, JsonValue)]): Expr = {
+  val operand = jsonToExpr(getField("operand", fields))
+  getField("op", fields) match {
+    case Dict(opFields) =>
+      opFields.filter { case (k, _) => k == "type" }.headOption() match {
+        case Some((_, String("Not"))) => Not(operand)
+        case _ => Cst(U())
+      }
+    case _ => Cst(U())
+  }
+}
+
+def parseConstant(fields: List[(String, JsonValue)]): Expr = {
+  getField("value", fields) match {
+    case Number(n) => Cst(I(n.toInt))
+    case Bool(b) => Cst(B(b))
+    case Null() => Cst(U())
+    case _ => Cst(U())
+  }
+}
+
+def parseName(fields: List[(String, JsonValue)]): Expr = {
+  getField("id", fields) match {
+    case String(id) => Var(id)
+    case _ => Cst(U())
+  }
+}
+
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val defaultInit: SymStore = EQ(SymVar("x"), SymCst(Cst(I(1))))
+
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        val res = genJson(f)
+        println(res)
+        val jsonFile = f ++ ".json"
+        // read json ast
+        val jsonAst: String = filesystem::readFile(jsonFile)
+        feed(jsonAst) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          
+          // Try to extract and parse assertion from JSON
+          val init =  (tryGetAssertionFromJson(jsonVal)) match {
+            case Some(assertionObj) => {
+               (getAssertionAst(assertionObj)) match {
+                case Some(astJson) => {
+                  // Convert the assertion AST to an Expr, then to a SymStore
+                  val expr = jsonToExpr(astJson)
+                  val (v, _) = eval_sym(E(expr), defaultInit) // This is kinda a cool use of our eval to translate expr to symstore
+                  v
+                }
+                case None() => defaultInit
+              }
+            }
+            case None() => defaultInit
+          }
+          
+          // evaluate
+          val (v, s) = eval_sym(parsed, init)
+          // parse end state into smtlib
+          val smt = symStoreToSmtScript(s)
+          // print output
+          println("Starting postcondition: ")
+          printSym(init)
+          println("---------")
+          println("SMT-LIB output: ")
+          println(smt)
+          println("---------")
+          println("Z3 output: ")
+          println(runZ3(smt))
+        }
+      }
+    }
+    case Nil() => println("no file passed in")
+  }
+}

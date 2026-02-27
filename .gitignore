@@ -6,6 +6,9 @@
 /out/
 out/
 
+# interp output
+*_output.txt
+
 # node for slidev presentation
 # Logs
 logs
@@ -14,6 +17,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+package-lock.json
+package.json
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -165,3 +170,6 @@ code/typeclass_cps_based/.lake
 *.synctex.gz
 
 *.aux
+
+smt_output.txt
+concrete_output.txt

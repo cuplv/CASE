@@ -1,0 +1,88 @@
+module pylang/syntax
+
+type Val {
+  I(i: Int)
+  B(b: Bool)
+  Str(s: String)
+  U()
+}
+
+def println(v: Val) = v match {
+  case I(i) => {
+    val s = "Int(" ++ show(i) ++ ")"
+    println(s)
+  }
+  case B(b) => {
+    val s = "Bool(" ++ show(b) ++ ")"
+    println(s)
+  }
+  case Str(str) => {
+    val s = "Str(\"" ++ str ++ "\")"
+    println(s)
+  }
+  case U() => println("()")
+}
+
+type Expr {
+  Cst(v: Val)
+  Var(x: String)
+  Plus(e1: Expr, e2: Expr)
+  Minus(e1: Expr, e2: Expr)
+  Not(e: Expr)
+  Eq(e1: Expr, e2: Expr)
+  Lt(e1: Expr, e2: Expr)
+  Gt(e1: Expr, e2: Expr)
+  Le(e1: Expr, e2: Expr)
+  Ge(e1: Expr, e2: Expr)
+}
+
+def toString(v: Val): String = v match {
+  case I(i) => "I(" ++ show(i) ++ ")"
+  case B(b) => "B(" ++ show(b) ++ ")"
+  case Str(s) => "Str(\"" ++ s ++ "\")"
+  case U() => "U()"
+}
+
+def toString(e: Expr): String = e match {
+  case Cst(v) => "Cst(" ++ toString(v) ++ ")"
+  case Var(x) => "Var(\"" ++ x ++ "\")"
+  case Plus(e1, e2) => "Plus(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+  case Minus(e1, e2) => "Minus(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+  case Not(e) => "Not(" ++ toString(e) ++ ")"
+  case Eq(e1, e2) => "Eq(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+  case Lt(e1, e2) => "Lt(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+  case Gt(e1, e2) => "Gt(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+  case Le(e1, e2) => "Le(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+  case Ge(e1, e2) => "Ge(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+}
+
+def println(e: Expr):Unit = {
+  val s = toString(e)
+  println(s)
+}
+
+type Stmt {
+  Skip()
+  Asgn(x: String, v: Expr)
+  If(g: Expr, t: Stmt, f: Stmt)
+  While(g: Expr, b: Stmt)
+  Seq(e1: Stmt, e2: Stmt)
+}
+
+def toString(s: Stmt): String = s match {
+  case Skip() => "Skip()"
+  case Asgn(x, v) => "Asgn(\"" ++ x ++ "\", " ++ toString(v) ++ ")"
+  case If(g, t, f) => "If(" ++ toString(g) ++ ", " ++ toString(t) ++ ", " ++ toString(f) ++ ")"
+  case While(g, b) => "While(" ++ toString(g) ++ ", " ++ toString(b) ++ ")"
+  case Seq(e1, e2) => "Seq(" ++ toString(e1) ++ ", " ++ toString(e2) ++ ")"
+}
+
+type Prog {
+  E(e : Expr)
+  S(s : Stmt)
+}
+
+def toString(p: Prog): String = p match {
+  case E(e) => "E(" ++ toString(e) ++ ")"
+  case S(s) => "S(" ++ toString(s) ++ ")"
+}

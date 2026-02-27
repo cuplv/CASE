@@ -1,0 +1,166 @@
+module concrete
+
+import pylang/interp
+import pylang/pyconv
+import pylang/syntax
+
+import args
+import io/error
+import io/filesystem
+import json
+import map
+import scanner
+
+def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
+  try {
+    with eval_forwards[Val, State[Val]]
+    eval((prog, init))
+  }
+  with cstI[Val, State[Val]] {(st, v) => 
+    resume((v, st))
+  }
+  with varI[Val, State[Val]] { (st, x) =>
+    val m: Map[String, Val] = st match {case St(a) => a}
+    val v = map::get[String,Val](m, x) match {
+      case Some(i) => i
+      case None() => U()
+    }
+    resume((v, st))
+  }
+  with asgnI[Val, State[Val]] { (st, x, v) =>
+    val m = st match {case St(a) => a}
+    val newState = m.put(x, v)
+    resume((U(), St(newState)))
+  }
+  with binopI[Val, State[Val]] { (st, op, d1, d2) =>
+    op match {
+      case PlusOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((I(i1 + i2), st))
+          case (I(i1), B(i2)) =>
+            val bval = i2 match {case true => 1; case false => 0}
+            resume((I(i1 + bval), st))
+          case (B(i1), I(i2)) =>
+            val bval = i1 match {case true => 1; case false => 0}
+            resume((I(i2 + bval), st))
+          case (Str(i1), Str(i2)) => resume((Str(i1 ++ i2), st))
+          case _ => resume((U(), st))
+        }
+      case MinusOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((I(i1 - i2), st))
+          case (I(i1), B(i2)) =>
+            val bval = i2 match {case true => 1; case false => 0}
+            resume((I(i1 - bval), st))
+          case (B(i1), I(i2)) =>
+            val bval = i1 match {case true => 1; case false => 0}
+            resume((I(i2 - bval), st))
+          case _ => resume((U(), st))
+        }
+      case EqOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 == i2), st))
+          case (B(b1), B(b2)) => resume((B(b1 == b2), st))
+          case (Str(s1), Str(s2)) => resume((B(s1 == s2), st))
+          case _ => resume((B(false), st))
+        }
+      case LtOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 < i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
+      case GtOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 > i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
+      case LeOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 <= i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
+      case GeOp() =>
+        (d1, d2) match {
+          case (I(i1), I(i2)) => resume((B(i1 >= i2), st))
+          case (B(b1), B(b2)) => resume((B(false), st))
+          case _ => resume((B(false), st))
+        }
+    }
+  }
+  with unopI[Val, State[Val]] { (st, op, d) =>
+    op match {
+      case NotOp() =>
+        d match {
+          case B(true) => resume((B(false), st))
+          case B(false) => resume((B(true), st))
+          case _ => resume((U(), st))
+        }
+    }
+  }
+  with ifI[Val, State[Val]] {(stT, stF, g, t, f) =>
+    g match {
+      case B(true) => resume((t, stT))
+      case B(false) => resume((f, stF))
+      case _ => resume((U(), stF))
+    }
+  }
+  with whileI[Val, State[Val]] {(stG, stB, g, b) =>
+    g match {
+      case B(true) => resume((g, stB))
+      case B(false) => resume((g, stG))
+      case _ => resume((U(), stG))
+    }
+  }
+  with recurse[Val] {(v) =>
+    v match {
+      case B(true) => resume(true)
+      case _ => resume(false)
+    }
+  }
+  with branch[Val] {(v) =>
+    v match {
+      case B(true) => resume(1)
+      case B(false) => resume(0)
+      case _ => resume(-1)
+    }
+  }
+  with seqI[Val, State[Val]] {(_, st2, _, v2) => resume((v2, st2))}
+  with skipI[Val, State[Val]] {(st) => resume((U(), st))}
+}
+
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val init: Map[String, Val] = map::empty(box compareStringBytes)
+
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        // read json ast
+        val jsonFile: String = filesystem::readFile(f)
+        feed(jsonFile) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          // evaluate
+          val (_, s) = run(parsed, St(init))
+          // extract end state
+          val m = s match {case St(a) => a}
+          // print output
+          println("---------")
+          m.foreach { (k,v) => println(k); println(v)}
+          println("---------")
+        }
+      }
+    }
+    case Nil() => println("no file passed in")
+  }
+}

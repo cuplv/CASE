@@ -1,0 +1,234 @@
+module typecheck
+
+import pylang/interp
+import pylang/pyconv
+import pylang/syntax
+
+import args
+import io/error
+import io/filesystem
+import json
+import map
+import set
+import scanner
+
+type Type {
+  TInt()
+  TBool()
+  TStr()
+  TUnit()
+  TError()
+}
+
+def toStr(t: Type) = t match {
+  case TInt() => "TInt"
+  case TBool() => "TBool"
+  case TStr() => "TStr"
+  case TUnit() => "TUnit"
+  case TError() => "TError"
+}
+
+def println(ts: Set[Type]) = {
+  ts.foreach { t => println("  " ++ toStr(t)) }
+}
+
+def typeEquals(t1: Type, t2: Type): Bool = {
+  (t1, t2) match {
+    case (TInt(), TInt()) => true
+    case (TBool(), TBool()) => true
+    case (TStr(), TStr()) => true
+    case (TUnit(), TUnit()) => true
+    case (TError(), TError()) => true
+    case _ => false
+  }
+}
+
+def canCompare(t1: Type, t2: Type): Bool = {
+  (t1, t2) match {
+    case (TInt(), TInt()) => true
+    case (TInt(), TBool()) => true
+    case (TBool(), TInt()) => true
+    case (TBool(), TBool()) => true
+    case (TStr(), TStr()) => true
+    case _ => println("Error Comparing: " ++ toStr(t1) ++ ", " ++ toStr(t2)); false
+  }
+}
+
+def mergeStates(st1: State[Set[Type]], st2: State[Set[Type]]): State[Set[Type]] = {
+  val m1 = st1 match { case St(a) => a }
+  val m2 = st2 match { case St(a) => a }
+  var merged = m1
+  map::foreach(m2) { (k, newTypes) =>
+    val existing = map::get[String, Set[Type]](merged, k) match {
+      case Some(types) => types
+      case None() => set::emptyGeneric()
+    }
+    val updated = set::union(existing, newTypes)
+    merged = merged.put(k, updated)
+  }
+  St(merged)
+  St(merged)
+}
+
+def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
+  try {
+    with eval_forwards[Set[Type], State[Set[Type]]]
+    eval((prog, init))
+  }
+  with cstI[Set[Type], State[Set[Type]]] {(st, v) => 
+    val ts = v match {
+      case I(_) => [TInt()]
+      case B(_) => [TBool()]
+      case Str(_) => [TStr()]
+      case U() => [TUnit()]
+    }
+    resume((set::fromListGeneric(ts), st))
+  }
+  with varI[Set[Type], State[Set[Type]]] { (st, x) =>
+    val m: Map[String, Set[Type]] = st match {case St(a) => a}
+    val ts = map::get[String, Set[Type]](m, x) match {
+      case Some(types) => types
+      case None() => set::fromListGeneric([TError()])
+    }
+    resume((ts, st))
+  }
+  with asgnI[Set[Type], State[Set[Type]]] { (st, x, ts) =>
+    val m = st match {case St(a) => a}
+    val newState = m.put(x, ts)
+    resume((set::fromListGeneric([TUnit()]), St(newState)))
+  }
+  with binopI[Set[Type], State[Set[Type]]] { (st, op, ts1, ts2) =>
+    op match {
+      case PlusOp() =>
+        val result = ts1.toList.flatMap { t1 =>
+          ts2.toList.map { t2 =>
+            (t1, t2) match {
+              case (TInt(), TInt()) => TInt()
+              case (TInt(), TBool()) => TInt()
+              case (TBool(), TInt()) => TInt()
+              case (TStr(), TStr()) => TStr()
+              case _ => println("Error Adding: " ++ toStr(t1) ++ ", " ++ toStr(t2)); TError()
+            }
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+      case MinusOp() =>
+        val result = ts1.toList.flatMap { t1 =>
+          ts2.toList.map { t2 =>
+            (t1, t2) match {
+              case (TInt(), TInt()) => TInt()
+              case (TInt(), TBool()) => TInt()
+              case (TBool(), TInt()) => TInt()
+              case _ => println("Error Subtracting: " ++ toStr(t1) ++ ", " ++ toStr(t2)); TError()
+            }
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+      case EqOp() =>
+        val result = ts1.toList.flatMap { t1 =>
+          ts2.toList.map { t2 =>
+            (t1, t2) match {
+              case (TInt(), TInt()) => TBool()
+              case (TBool(), TBool()) => TBool()
+              case (TStr(), TStr()) => TBool()
+              case _ => println("Error Comparing: " ++ toStr(t1) ++ ", " ++ toStr(t2)); TError()
+            }
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+      case LtOp() =>
+        val result = ts1.toList.flatMap { t1 =>
+          ts2.toList.map { t2 =>
+            if (canCompare(t1, t2)) TBool() else TError()
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+      case GtOp() =>
+        val result = ts1.toList.flatMap { t1 =>
+          ts2.toList.map { t2 =>
+            if (canCompare(t1, t2)) TBool() else TError()
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+      case LeOp() =>
+        val result = ts1.toList.flatMap { t1 =>
+          ts2.toList.map { t2 =>
+            if (canCompare(t1, t2)) TBool() else TError()
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+      case GeOp() =>
+        val result = ts1.toList.flatMap { t1 =>
+          ts2.toList.map { t2 =>
+            if (canCompare(t1, t2)) TBool() else TError()
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+    }
+  }
+  with unopI[Set[Type], State[Set[Type]]] { (st, op, ts) =>
+    op match {
+      case NotOp() =>
+        val result = ts.toList.map { t =>
+          t match {
+            case TBool() => TBool()
+            case TInt() => TBool()
+            case TStr() => TBool()
+            case _ => TError()
+          }
+        }
+        resume((set::fromListGeneric(result), st))
+    }
+  }
+  with ifI[Set[Type], State[Set[Type]]] {(stT, stF, ts, tsT, tsF) =>
+    val result: Set[Type] = set::union(tsT, tsF)
+    val merged = mergeStates(stT, stF)
+    resume((result, merged))
+  }
+  with whileI[Set[Type], State[Set[Type]]] {(stG, stB, ts, tsB) =>
+    val merged = mergeStates(stG, stB)
+    resume((set::fromListGeneric([TUnit()]), merged))
+  }
+  with recurse[Set[Type]] {(ts) =>
+    resume(false)
+  }
+  with branch[Set[Type]] {(ts) =>
+    resume(-1)
+  }
+  with seqI[Set[Type], State[Set[Type]]] {(_, st2, _, ts2) => resume((ts2, st2))}
+  with skipI[Set[Type], State[Set[Type]]] {(st) => resume((set::fromListGeneric([TUnit()]), st))}
+}
+
+def main() = {
+  with on[WrongFormat].panic
+  with on[IOError].panic
+  val init: Map[String, Set[Type]] = map::empty(box compareStringBytes)
+
+  // parse files to evaluate
+  val file: List[String] = args::commandLineArgs()
+  file match {
+    case Cons(_, _) => {
+      // for each file passed in
+      file.foreach{ (f) =>
+        // read json ast
+        val jsonFile: String = filesystem::readFile(f)
+        feed(jsonFile) {
+          with scanner[Char]
+          // decode into effekt
+          val (_, jsonVal) = build { decodeJson() }
+          // parse to Prog
+          val parsed = pythonAstToProg(jsonVal)
+          // evaluate
+          val (_, s) = run(parsed, St(init))
+          // extract end state
+          val m = s match {case St(a) => a}
+          // print output
+          println("---------")
+          m.foreach { (k,v) => println(k ++ " : {"); println(v); println("}")}
+          println("---------")
+        }
+      }
+    }
+    case Nil() => println("no file passed in")
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "type": "Module",
+  "body": [
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "i",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Constant",
+        "value": 0,
+        "kind": null
+      },
+      "type_comment": null
+    },
+    {
+      "type": "While",
+      "test": {
+        "type": "Compare",
+        "left": {
+          "type": "Name",
+          "id": "i",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "ops": [
+          {
+            "type": "Lt"
+          }
+        ],
+        "comparators": [
+          {
+            "type": "Constant",
+            "value": 1000,
+            "kind": null
+          }
+        ]
+      },
+      "body": [
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "a",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "Name",
+            "id": "i",
+            "ctx": {
+              "type": "Load"
+            }
+          },
+          "type_comment": null
+        },
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "b",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "Name",
+            "id": "a",
+            "ctx": {
+              "type": "Load"
+            }
+          },
+          "type_comment": null
+        },
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "c",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "Name",
+            "id": "b",
+            "ctx": {
+              "type": "Load"
+            }
+          },
+          "type_comment": null
+        },
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "d",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "Name",
+            "id": "c",
+            "ctx": {
+              "type": "Load"
+            }
+          },
+          "type_comment": null
+        },
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "e",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "Name",
+            "id": "d",
+            "ctx": {
+              "type": "Load"
+            }
+          },
+          "type_comment": null
+        },
+        {
+          "type": "Assign",
+          "targets": [
+            {
+              "type": "Name",
+              "id": "i",
+              "ctx": {
+                "type": "Store"
+              }
+            }
+          ],
+          "value": {
+            "type": "BinOp",
+            "left": {
+              "type": "Name",
+              "id": "e",
+              "ctx": {
+                "type": "Load"
+              }
+            },
+            "op": {
+              "type": "Add"
+            },
+            "right": {
+              "type": "Constant",
+              "value": 1,
+              "kind": null
+            }
+          },
+          "type_comment": null
+        }
+      ],
+      "orelse": []
+    }
+  ],
+  "type_ignores": []
+}

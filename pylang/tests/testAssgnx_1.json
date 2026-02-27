@@ -1,0 +1,80 @@
+{
+  "type": "Module",
+  "body": [
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "x",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "Constant",
+        "value": 1,
+        "kind": null
+      },
+      "type_comment": null
+    },
+    {
+      "type": "Assign",
+      "targets": [
+        {
+          "type": "Name",
+          "id": "y",
+          "ctx": {
+            "type": "Store"
+          }
+        }
+      ],
+      "value": {
+        "type": "BinOp",
+        "left": {
+          "type": "Name",
+          "id": "x",
+          "ctx": {
+            "type": "Load"
+          }
+        },
+        "op": {
+          "type": "Add"
+        },
+        "right": {
+          "type": "Constant",
+          "value": 1,
+          "kind": null
+        }
+      },
+      "type_comment": null
+    }
+  ],
+  "type_ignores": [],
+  "assertion": {
+    "string": "y==2",
+    "ast": {
+      "type": "Compare",
+      "left": {
+        "type": "Name",
+        "id": "y",
+        "ctx": {
+          "type": "Load"
+        }
+      },
+      "ops": [
+        {
+          "type": "Eq"
+        }
+      ],
+      "comparators": [
+        {
+          "type": "Constant",
+          "value": 2,
+          "kind": null
+        }
+      ]
+    }
+  }
+}
