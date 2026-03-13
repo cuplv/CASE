@@ -40,7 +40,7 @@ effect skipI[D, S](st: S): (D, S)
 // lowering effects
 effect assume[D](st: State[D], guard: D, e: D): (D, State[D])
 effect assumeNot[D](st: State[D], guard: D, e: D): (D, State[D])
-effect recurse[D](v : D) : Bool
+effect recurse[D](v : D) : Int
 effect widen[D,S](g: D, st: S, st1: S): Bool
 effect branch[D](v: D): Int
 
@@ -159,11 +159,19 @@ def eval_forwards[D, S]
   }
   with whileE[S,Prog] { (st, guardExpr, bodyStmt) =>
     val (guardVal, st1) = resume((E(guardExpr), st))
-    val (bodyVal, st2) = resume((S(bodyStmt), st1))
-    val (wV, wS) = do whileI(st1, st2, guardVal, bodyVal)
-    do recurse(wV) match { // *does this break cumulativity...
-      case true => resume((S(While(guardExpr, bodyStmt)), wS))
-      case _ => resume((E(Cst(U())), st1))
+    do branch(guardVal) match {
+      case 1 => {  // concrete true
+        val (_, st2) = resume((S(bodyStmt), st1))
+        resume((S(While(guardExpr, bodyStmt)), st2))
+      }
+      case 0 => {  // concrete false
+        resume((E(Cst(U())), st1))
+      }
+      case _ => {  // run body once then exit
+        val (_, st2) = resume((S(bodyStmt), st1))
+        // placeholder for widening
+        resume((E(Cst(U())), st2))
+      }
     }
   }
   with seqE[S,Prog] { (st, s1, s2) =>

@@ -14,34 +14,19 @@
       ],
       "value": {
         "type": "Constant",
-        "value": true,
+        "value": false,
         "kind": null
       },
       "type_comment": null
     },
     {
-      "type": "If",
+      "type": "While",
       "test": {
-        "type": "Compare",
-        "left": {
-          "type": "Name",
-          "id": "x",
-          "ctx": {
-            "type": "Load"
-          }
-        },
-        "ops": [
-          {
-            "type": "Eq"
-          }
-        ],
-        "comparators": [
-          {
-            "type": "Constant",
-            "value": false,
-            "kind": null
-          }
-        ]
+        "type": "Name",
+        "id": "x",
+        "ctx": {
+          "type": "Load"
+        }
       },
       "body": [
         {
@@ -53,50 +38,46 @@
           },
           "body": [
             {
-              "type": "Expr",
-              "value": {
-                "type": "BinOp",
-                "left": {
+              "type": "Assign",
+              "targets": [
+                {
                   "type": "Name",
                   "id": "x",
                   "ctx": {
-                    "type": "Load"
+                    "type": "Store"
                   }
-                },
-                "op": {
-                  "type": "Add"
-                },
-                "right": {
-                  "type": "Constant",
-                  "value": 1,
-                  "kind": null
                 }
-              }
+              ],
+              "value": {
+                "type": "Constant",
+                "value": 0,
+                "kind": null
+              },
+              "type_comment": null
             }
           ],
           "orelse": []
         }
       ],
-      "orelse": [
+      "orelse": []
+    },
+    {
+      "type": "Assign",
+      "targets": [
         {
-          "type": "Assign",
-          "targets": [
-            {
-              "type": "Name",
-              "id": "x",
-              "ctx": {
-                "type": "Store"
-              }
-            }
-          ],
-          "value": {
-            "type": "Constant",
-            "value": 10,
-            "kind": null
-          },
-          "type_comment": null
+          "type": "Name",
+          "id": "x",
+          "ctx": {
+            "type": "Store"
+          }
         }
-      ]
+      ],
+      "value": {
+        "type": "Constant",
+        "value": 10,
+        "kind": null
+      },
+      "type_comment": null
     }
   ],
   "type_ignores": []

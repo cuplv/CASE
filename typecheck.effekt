@@ -190,7 +190,7 @@ def run(prog: Prog, init: State[Set[Type]]): (Set[Type], State[Set[Type]]) = {
     resume((set::fromListGeneric([TUnit()]), merged))
   }
   with recurse[Set[Type]] {(ts) =>
-    resume(false)
+    resume(-1)
   }
   with branch[Set[Type]] {(ts) =>
     resume(-1)

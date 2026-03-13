@@ -300,5 +300,30 @@
       "orelse": []
     }
   ],
-  "type_ignores": []
+  "type_ignores": [],
+  "assertion": {
+    "string": "i==1",
+    "ast": {
+      "type": "Compare",
+      "left": {
+        "type": "Name",
+        "id": "i",
+        "ctx": {
+          "type": "Load"
+        }
+      },
+      "ops": [
+        {
+          "type": "Eq"
+        }
+      ],
+      "comparators": [
+        {
+          "type": "Constant",
+          "value": 1,
+          "kind": null
+        }
+      ]
+    }
+  }
 }

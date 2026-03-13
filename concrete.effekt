@@ -116,8 +116,8 @@ def run(prog: Prog, init: State[Val]): (Val, State[Val]) = {
   }
   with recurse[Val] {(v) =>
     v match {
-      case B(true) => resume(true)
-      case _ => resume(false)
+      case B(true) => resume(1)
+      case _ => resume(2)
     }
   }
   with branch[Val] {(v) =>

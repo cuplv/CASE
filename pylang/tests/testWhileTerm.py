@@ -1,6 +1,7 @@
-x = True
-if x==False:
-    while (True):
-        x + 1
-else:
-    x = 10
+x = False
+
+while x:
+    while True:
+        x = 0
+
+x = 10
